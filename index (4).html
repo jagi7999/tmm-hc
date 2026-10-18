@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>House Build Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --display:'Baloo 2','Baloo Bhai 2','Trebuchet MS',system-ui,sans-serif;
+  --body:'Hind','Segoe UI',system-ui,-apple-system,'Noto Sans','Noto Sans Kannada',sans-serif;
+  --bg:#E3E7EA; --paper:#FCFCFA; --paper-2:#F4F6F7; --field:#FFFFFF; --plaster:#D6DCE0;
+  --ink:#1E2B37; --ink-2:#55636F; --line:#C9D0D6;
+  --head:#1E2B37; --head-ink:#F3F5F6; --tape-dark:#141A20;
+  --brick:#A83E2A; --brick-deep:#7E2A1A; --brick-ghost:#C3CCD2; --brick-soft:#F0D8D1;
+  --auto:#F6B41A; --auto-soft:#FBECC2; --auto-ink:#7A5200;
+  --indigo:#2E5E9E; --indigo-soft:#D8E4F3;
+  --ok:#2A7A58; --ok-soft:#D3EADD; --due:#9A5A0B; --due-soft:#FBE6C4;
+  --danger:#B3261E;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11171C; --paper:#1B242C; --paper-2:#212C35; --field:#141B21; --plaster:#26323C;
+    --ink:#E8EDF0; --ink-2:#9AA8B3; --line:#2F3C47;
+    --head:#0D1216; --head-ink:#F3F5F6; --tape-dark:#0A0E11;
+    --brick:#D0553B; --brick-deep:#E0654A; --brick-ghost:#33424E; --brick-soft:#3A211C;
+    --auto:#F6B41A; --auto-soft:#3A3013; --auto-ink:#F6C955;
+    --indigo:#7CA6E3; --indigo-soft:#1D2C42;
+    --ok:#5CC08F; --ok-soft:#17332A; --due:#F0B35A; --due-soft:#3A2B10;
+    --danger:#FF8A80;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11171C; --paper:#1B242C; --paper-2:#212C35; --field:#141B21; --plaster:#26323C;
+  --ink:#E8EDF0; --ink-2:#9AA8B3; --line:#2F3C47;
+  --head:#0D1216; --head-ink:#F3F5F6; --tape-dark:#0A0E11;
+  --brick:#D0553B; --brick-deep:#E0654A; --brick-ghost:#33424E; --brick-soft:#3A211C;
+  --auto:#F6B41A; --auto-soft:#3A3013; --auto-ink:#F6C955;
+  --indigo:#7CA6E3; --indigo-soft:#1D2C42;
+  --ok:#5CC08F; --ok-soft:#17332A; --due:#F0B35A; --due-soft:#3A2B10;
+  --danger:#FF8A80;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg);-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+body.noscroll{overflow:hidden}
+[hidden]{display:none!important}
+h1,h2,h3,h4,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--indigo);outline-offset:2px}
+.muted{color:var(--ink-2)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 1rem}
+
+/* header */
+.top{background:var(--head);color:var(--head-ink)}
+.top-inner{max-width:1120px;margin:0 auto;padding:1rem 1rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.75rem;min-width:0}
+.brand-emoji{font-size:2.2rem;line-height:1}
+.brand h1{font:800 1.65rem/1.1 var(--display);overflow-wrap:anywhere}
+.brand p{font-size:.9rem;opacity:.75}
+.top-actions{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.tape{height:11px;background:repeating-linear-gradient(-45deg,var(--auto) 0 14px,var(--tape-dark) 14px 28px)}
+.pill{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .75rem;border-radius:999px;font-size:.85rem;font-weight:600;background:rgba(255,255,255,.12);color:var(--head-ink);white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:44px;padding:.55rem 1rem;border-radius:10px;border:1.5px solid transparent;font-weight:600;font-size:.95rem;background:transparent;text-align:center}
+.btn.primary{background:var(--auto);color:#1E2B37;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.btn.primary:active{transform:translateY(1px)}
+.btn.ghost{border-color:currentColor;background:transparent}
+.top .btn.ghost{color:var(--head-ink);border-color:rgba(255,255,255,.35)}
+.btn.soft{background:var(--paper-2);border-color:var(--line)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.small{min-height:38px;padding:.3rem .75rem;font-size:.875rem}
+.icon-btn{width:36px;height:44px;border:0;background:transparent;border-radius:8px;color:var(--ink-2);font-size:1rem}
+.icon-btn:hover{background:var(--paper-2);color:var(--ink)}
+
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.tabs-in{max-width:1120px;margin:0 auto;padding:.6rem 1rem;display:flex;gap:.5rem;overflow-x:auto}
+.tab{flex:0 0 auto;min-height:44px;padding:.4rem 1.05rem;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font:700 1rem var(--display);display:inline-flex;align-items:center;gap:.4rem}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+main{max-width:1120px;margin:0 auto;padding:1.25rem 1rem 4rem}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.page-head h2{font:800 1.6rem/1.15 var(--display)}
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.6rem}
+.search{flex:1 1 240px;max-width:420px}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
+.chip{min-height:38px;padding:.25rem .85rem;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.list-gap{margin-top:1rem}
+
+/* form controls */
+input,select,textarea{font:inherit;color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:8px;padding:.5rem .65rem;min-height:44px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--ink-2);opacity:.75}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.25rem}
+.card h3{font:700 1.2rem/1.2 var(--display);margin-bottom:.75rem}
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1.5rem;align-items:center}
+.wall{display:flex;flex-direction:column;gap:4px;padding:14px;background:var(--plaster);border-radius:10px}
+.wall-row{display:flex;gap:4px}
+.brick{flex:2;height:24px;border-radius:3px;background:var(--brick-ghost)}
+.brick.half{flex:1}
+.brick.on{background:var(--brick);box-shadow:inset 0 -4px 0 rgba(0,0,0,.17),inset 0 2px 0 rgba(255,255,255,.14)}
+.brick.part{background:var(--brick);opacity:.5}
+.wall.over .brick.on{background:var(--brick-deep)}
+@keyframes lay{from{transform:translateY(-16px);opacity:0}to{transform:none;opacity:1}}
+.intro .brick.on{animation:lay .45s cubic-bezier(.2,.7,.3,1) both;animation-delay:calc(var(--i) * 24ms)}
+.stat-big{font:800 clamp(2.1rem,6vw,3rem)/1 var(--display);letter-spacing:-.01em;overflow-wrap:anywhere}
+.stat-lines{display:grid;gap:.35rem;margin-top:.6rem}
+.stat-lines p{font-size:1rem}
+.due-chip{display:inline-flex;gap:.4rem;align-items:center;margin-top:.9rem;padding:.35rem .8rem;border-radius:999px;background:var(--due-soft);color:var(--due);font-weight:700;font-size:.95rem}
+.over-chip{display:inline-flex;gap:.4rem;align-items:center;margin-top:.9rem;padding:.35rem .8rem;border-radius:6px;font-weight:700;color:#1E2B37;background:repeating-linear-gradient(-45deg,var(--auto) 0 10px,#F9CF63 10px 20px)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1rem 0}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem;display:grid;grid-template-columns:auto 1fr;gap:.2rem .8rem;align-items:center;border-left-width:6px}
+.tile.m{border-left-color:var(--brick)}
+.tile.t{border-left-color:var(--auto)}
+.tile.l{border-left-color:var(--indigo)}
+.tile-emoji{font-size:2rem;grid-row:span 2}
+.tile b{font:800 1.5rem/1.1 var(--display);overflow-wrap:anywhere}
+.tile span.lbl{color:var(--ink-2);font-size:.95rem}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;align-items:start;margin-bottom:1rem}
+.bar-row{display:grid;grid-template-columns:1.6rem minmax(0,1fr) auto;gap:.2rem .6rem;align-items:center;margin-bottom:.7rem}
+.bar-row .b-label{font-weight:600;overflow-wrap:anywhere}
+.bar-row .b-amt{font-weight:700;font-variant-numeric:tabular-nums}
+.bar-track{grid-column:2 / span 2;height:8px;border-radius:99px;background:var(--paper-2);overflow:hidden}
+.bar-track i{display:block;height:100%;border-radius:99px}
+.k-m{background:var(--brick)}.k-t{background:var(--auto)}.k-l{background:var(--indigo)}
+.chart{width:100%;height:auto;display:block}
+.chart .tx{fill:var(--ink-2);font:600 11px var(--body)}
+.chart .tv{fill:var(--ink);font:700 11px var(--body)}
+.chart .base{stroke:var(--line);stroke-width:1.5}
+.bm{fill:var(--brick)}.bt{fill:var(--auto)}.bl{fill:var(--indigo)}
+.legend{display:flex;gap:.9rem;flex-wrap:wrap;margin-top:.6rem;font-size:.9rem;color:var(--ink-2)}
+.latest{display:grid;gap:.25rem}
+.latest-row{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;gap:.7rem;align-items:center;width:100%;text-align:left;border:0;background:transparent;padding:.55rem .4rem;border-radius:10px;min-height:52px}
+.latest-row:hover{background:var(--paper-2)}
+.latest-row .l-emoji{font-size:1.5rem;text-align:center}
+.latest-row b{display:block;font-weight:600;overflow-wrap:anywhere}
+.latest-row small{color:var(--ink-2)}
+.latest-row .amt{font-weight:700;font-variant-numeric:tabular-nums}
+.empty{text-align:center;padding:2.2rem 1rem}
+.empty .big-emoji{font-size:3rem;line-height:1.1}
+.empty h3{font:800 1.5rem var(--display);margin:.4rem 0 .3rem}
+.empty p{color:var(--ink-2);max-width:46ch;margin:0 auto 1rem}
+.empty .btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+
+/* receipts and pay slips */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.6rem 1.2rem;align-items:start}
+.receipt{position:relative;background:var(--paper);padding:1rem 1.1rem 1rem;border-radius:6px 6px 0 0;margin-bottom:10px;box-shadow:0 1px 0 var(--line),0 8px 14px -10px rgba(30,43,55,.45)}
+.receipt.mat{border-top:5px solid var(--brick)}
+.receipt.lab{border-top:5px solid var(--indigo)}
+.zig{position:absolute;left:0;bottom:-8px;width:100%;height:8px;display:block;color:var(--paper)}
+.r-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;margin-bottom:.6rem}
+.r-head h4{font:700 1.15rem/1.2 var(--display);overflow-wrap:anywhere}
+.r-head small{display:block;color:var(--ink-2);font-size:.85rem}
+.badge{flex:0 0 auto;padding:.15rem .6rem;border-radius:999px;background:var(--indigo-soft);color:var(--indigo);font-weight:700;font-size:.82rem;white-space:nowrap}
+.r-list{list-style:none;margin:0;padding:0;border-top:1.5px dashed var(--line)}
+.r-item{display:grid;grid-template-columns:1.7rem minmax(0,1fr) auto;gap:.5rem;align-items:start;padding:.5rem 0;border-bottom:1px dashed var(--line)}
+.r-emoji{font-size:1.15rem;line-height:1.5}
+.r-name{font-weight:600;overflow-wrap:anywhere}
+.r-name small{display:block;font-weight:400;color:var(--ink-2);font-size:.85rem}
+.r-amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.r-item.charge .r-name{color:var(--auto-ink)}
+.r-total{display:flex;justify-content:space-between;align-items:baseline;padding:.65rem 0 .4rem;font:800 1.3rem var(--display)}
+.r-note{font-size:.9rem;color:var(--ink-2);font-style:italic;margin-bottom:.4rem;overflow-wrap:anywhere}
+.r-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+.r-actions{display:flex;gap:.25rem}
+.status{display:inline-flex;align-items:center;gap:.3rem;min-height:36px;padding:.15rem .8rem;border-radius:999px;border:0;font-weight:700;font-size:.9rem}
+.status.paid{background:var(--ok-soft);color:var(--ok)}
+.status.due{background:var(--due-soft);color:var(--due)}
+.status:disabled{cursor:default}
+.stat-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem;margin-bottom:1rem}
+.stat-strip .tile{border-left-width:1px;grid-template-columns:auto 1fr}
+.stat-strip .tile b{font-size:1.25rem}
+.stat-strip small{grid-column:2;color:var(--ink-2);font-size:.85rem}
+
+/* sheets */
+.backdrop{position:fixed;inset:0;z-index:50;background:rgba(14,20,26,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--paper);width:100%;max-width:940px;max-height:94vh;max-height:94dvh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,.35)}
+.sheet.narrow{max-width:520px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem .5rem}
+.sheet-head h3{font:800 1.4rem var(--display)}
+.sheet-body{padding:.3rem 1.1rem 1rem;overflow-y:auto;flex:1}
+.sheet-foot{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.8rem 1.1rem calc(.8rem + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--paper-2);border-radius:0 0 0 0}
+.foot-total{display:flex;gap:.3rem 1.1rem;flex-wrap:wrap;align-items:baseline;font-size:.95rem;color:var(--ink-2)}
+.foot-total strong{font:800 1.3rem var(--display);color:var(--ink)}
+.foot-btns{display:flex;gap:.5rem;margin-left:auto}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-bottom:.9rem}
+.fld{display:flex;flex-direction:column;gap:.25rem;min-width:0}
+.fld>span,.cell>span{font-size:.8rem;font-weight:600;color:var(--ink-2)}
+fieldset.block{border:1.5px solid var(--line);border-radius:12px;padding:.7rem .8rem .8rem;margin:0 0 .9rem}
+fieldset.block legend{font:700 1.05rem var(--display);padding:0 .4rem}
+fieldset.block.auto{background:var(--auto-soft);border-color:var(--auto)}
+.row{display:grid;gap:.6rem;align-items:end;padding:.7rem;border:1px solid var(--line);border-radius:10px;background:var(--paper-2);margin-bottom:.6rem}
+.item-row{grid-template-columns:150px minmax(0,1fr) 84px 96px 104px 108px 36px}
+.crew-row.daily{grid-template-columns:130px minmax(0,1fr) 90px 110px 112px 36px}
+.crew-row.weekly{grid-template-columns:130px minmax(0,1fr) 84px 104px 76px 110px 36px}
+.crew-row.once{grid-template-columns:130px minmax(0,1fr) 90px 140px 36px}
+.cell{display:flex;flex-direction:column;gap:.25rem;min-width:0}
+.cell output{min-height:44px;display:flex;align-items:center;font:700 1.05rem var(--display);font-variant-numeric:tabular-nums}
+.add-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.seg{display:flex;gap:.4rem}
+.seg button{flex:1;min-height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--field);font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.paytypes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin-bottom:.9rem}
+.paytype{border:2px solid var(--line);background:var(--field);border-radius:12px;padding:.6rem .5rem;text-align:center;display:grid;gap:.1rem}
+.paytype .pe{font-size:1.6rem;line-height:1.1}
+.paytype b{font:700 1rem var(--display)}
+.paytype small{color:var(--ink-2);font-size:.78rem;line-height:1.25}
+.paytype[aria-pressed="true"]{border-color:var(--indigo);background:var(--indigo-soft)}
+.err{background:var(--brick-soft);color:var(--brick);border-radius:8px;padding:.5rem .75rem;font-weight:600;margin-bottom:.8rem}
+.settings-sec{padding:.9rem 0;border-top:1px solid var(--line)}
+.settings-sec:first-child{border-top:0;padding-top:0}
+.settings-sec h4{font:700 1.1rem var(--display);margin-bottom:.4rem}
+.settings-sec p.muted{font-size:.9rem;margin-bottom:.6rem}
+.toast{position:fixed;left:50%;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:999px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (min-width:901px){
+  .backdrop{align-items:center;padding:1rem}
+  .sheet{border-radius:18px;max-height:90vh;max-height:90dvh}
+  .sheet-foot{border-radius:0 0 18px 18px}
+}
+@media (max-width:900px){
+  .hero,.grid2{grid-template-columns:minmax(0,1fr)}
+  .tiles{grid-template-columns:minmax(0,1fr)}
+  .stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .item-row,.crew-row.daily,.crew-row.weekly,.crew-row.once{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .c-cat,.c-name{grid-column:span 6}
+  .c-qty,.c-unit,.c-rate{grid-column:span 2}
+  .c-out{grid-column:span 5}
+  .c-x{grid-column:span 1;justify-self:end}
+  .crew-row .c-g,.crew-row .c-r{grid-column:span 3}
+  .crew-row.daily .c-n,.crew-row.daily .c-rate{grid-column:span 3}
+  .crew-row.weekly .c-n,.crew-row.weekly .c-rate,.crew-row.weekly .c-days{grid-column:span 2}
+  .crew-row.once .c-n{grid-column:span 2}
+  .crew-row.once .c-amt{grid-column:span 4}
+  .crew-row.once .c-x{grid-column:span 6}
+}
+@media (max-width:520px){
+  .paytype small{display:none}
+  .brand h1{font-size:1.4rem}
+  .stat-strip .tile{grid-template-columns:1fr}
+  .stat-strip .tile-emoji{grid-row:auto}
+  .stat-strip small{grid-column:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .intro .brick.on{animation:none}
+  .toast{transition:none}
+}
+
+/* snapshot restore bar */
+.seedbar{max-width:1120px;margin:1rem auto 0;padding:0 1rem}
+.seedbar .box{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;background:var(--due-soft);color:var(--ink);border:1.5px solid var(--auto);border-radius:14px;padding:.8rem 1rem}
+.seedbar .box p{flex:1 1 260px;font-size:.95rem}
+.seedbar .box .add-row{margin-left:auto}
+.seedbar .box.ok{background:var(--ok-soft);border-color:var(--ok)}
+.seedbar .box.bad{background:var(--brick-soft);border-color:var(--brick)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="brand-emoji" aria-hidden="true">🏗️</span>
+      <div>
+        <h1 id="projName">My House Build</h1>
+        <p>Materials, labour and transport in one place</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="pill" id="syncChip">⏳ Connecting…</span>
+      <span class="pill" id="roleChip">🛠️ Admin mode</span>
+      <button class="btn ghost small" id="lockBtn" data-act="lock" hidden></button>
+      <button class="btn ghost small" data-act="settings">⚙️ Settings</button>
+    </div>
+  </div>
+  <div class="tape" aria-hidden="true"></div>
+</header>
+<nav class="tabs" aria-label="Sections">
+  <div class="tabs-in" role="tablist" id="tabs"></div>
+</nav>
+<div class="seedbar" id="seedBar" hidden></div>
+<main id="view"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="hbt-seed">{"format":"house-build-tracker-snapshot","version":1,"exportedAt":null,"source":"empty","settings":{},"bills":[],"labour":[]}</script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- reference data ---------- */
+var CATS=[
+  {id:'cement',label:'Cement',emoji:'🪣',ph:'e.g. OPC 53 grade cement'},
+  {id:'steel',label:'Steel and TMT',emoji:'🔩',ph:'e.g. 12 mm TMT bars'},
+  {id:'sand',label:'Sand',emoji:'🏖️',ph:'e.g. M-sand load'},
+  {id:'aggregate',label:'Jelly and aggregate',emoji:'🪨',ph:'e.g. 20 mm jelly'},
+  {id:'brick',label:'Bricks and blocks',emoji:'🧱',ph:'e.g. Red bricks or solid blocks'},
+  {id:'timber',label:'Wood and doors',emoji:'🪵',ph:'e.g. Door frame'},
+  {id:'tiles',label:'Tiles and flooring',emoji:'🔲',ph:'e.g. 2 x 2 vitrified tiles'},
+  {id:'plumbing',label:'Plumbing',emoji:'🚿',ph:'e.g. CPVC pipes and fittings'},
+  {id:'electrical',label:'Electrical',emoji:'💡',ph:'e.g. 2.5 sq mm wire'},
+  {id:'paint',label:'Paint and putty',emoji:'🎨',ph:'e.g. Wall putty 20 kg'},
+  {id:'hardware',label:'Hardware and tools',emoji:'🔧',ph:'e.g. Binding wire'},
+  {id:'other',label:'Other',emoji:'📦',ph:'Item name'}
+];
+var UNITS=['bag','kg','ton','load','cft','nos','sq.ft','ltr','m','box','bundle','set'];
+var VEHICLES=[
+  {id:'none',label:'No vehicle',emoji:'🚶'},
+  {id:'auto',label:'Auto',emoji:'🛺'},
+  {id:'tempo',label:'Tempo or mini truck',emoji:'🚚'},
+  {id:'lorry',label:'Lorry',emoji:'🚛'},
+  {id:'tractor',label:'Tractor',emoji:'🚜'},
+  {id:'cart',label:'Hand cart',emoji:'🛒'}
+];
+var ROLES=['Mason (Mestri)','Helper (Kooli)','Carpenter','Bar bender','Centering and shuttering','Electrician','Plumber','Painter','Tile layer','Excavation','Watchman','Other'];
+var AREAS=['Excavation','Foundation','Columns and beams','Slab','Brick work','Plastering','Flooring','Plumbing','Electrical','Painting','Compound wall'];
+var PAY={
+  daily:{label:'Daily',emoji:'📅',hint:'Wages paid per day'},
+  weekly:{label:'Weekly',emoji:'🗓️',hint:'Settled once a week'},
+  once:{label:'One-time',emoji:'🤝',hint:'Contract or lump sum'}
+};
+var GENDER={men:{label:'Men',one:'man',emoji:'👷‍♂️'},women:{label:'Women',one:'woman',emoji:'👷‍♀️'}};
+var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+var catOf=function(id){return CATS.filter(function(c){return c.id===id})[0]||CATS[CATS.length-1]};
+var vehOf=function(id){return VEHICLES.filter(function(c){return c.id===id})[0]||VEHICLES[0]};
+var payOf=function(id){return PAY[id]||PAY.daily};
+var genOf=function(id){return GENDER[id]||GENDER.men};
+
+/* ---------- helpers ---------- */
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var uid=function(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4)};
+var num=function(v){var n=parseFloat(v);return isFinite(n)?n:0};
+var nv=function(v){return (v===0||v==='0'||v===''||v==null)?'':v};
+var inr=new Intl.NumberFormat('en-IN',{maximumFractionDigits:2});
+var money=function(n){return '₹'+inr.format(Math.round(num(n)*100)/100)};
+function compact(n){
+  if(n>=1e7)return '₹'+(n/1e7).toFixed(1).replace(/\.0$/,'')+'Cr';
+  if(n>=1e5)return '₹'+(n/1e5).toFixed(1).replace(/\.0$/,'')+'L';
+  if(n>=1e3)return '₹'+(n/1e3).toFixed(1).replace(/\.0$/,'')+'k';
+  return '₹'+Math.round(n);
+}
+function pad(n){return String(n).length<2?'0'+n:String(n)}
+function isoD(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function today(){return isoD(new Date())}
+function parseD(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new Date(+m[1],+m[2]-1,+m[3]):null}
+function fmtDate(s){var d=parseD(s);return d?d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear():''}
+function fmtShort(d){return d.getDate()+' '+MONTHS[d.getMonth()]}
+function addDays(d,n){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()+n);return x}
+function weekStart(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+var clone=function(o){return JSON.parse(JSON.stringify(o))};
+
+/* ---------- money maths ---------- */
+var itemAmt=function(i){return num(i.qty)*num(i.rate)};
+var billItems=function(b){return b.items.reduce(function(s,i){return s+itemAmt(i)},0)};
+var billTransport=function(b){return num(b.transport)+num(b.loading)};
+var billTotal=function(b){return billItems(b)+billTransport(b)};
+var lineAmt=function(e,l){
+  if(e.payType==='once')return num(l.amount);
+  return num(l.count)*num(l.rate)*(e.payType==='weekly'?num(l.days):1);
+};
+var labourTotal=function(e){return e.lines.reduce(function(s,l){return s+lineAmt(e,l)},0)};
+var personDays=function(e,l){return e.payType==='once'?0:num(l.count)*(e.payType==='weekly'?num(l.days):1)};
+var heads=function(e){return e.lines.reduce(function(s,l){return s+num(l.count)},0)};
+
+/* ---------- state and storage (Turso over HTTP) ---------- */
+/* SECURITY NOTE: this token ships inside the page, so anyone who can open the page can read
+   and change this database. Keep the repo private, rotate the token if it ever leaks, and
+   consider a read-only token for anyone who only needs to view. */
+var CONFIG={
+  url:'https://tmm-house-jagadishdb.aws-ap-south-1.turso.io',
+  token:'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTAwMDQwMzksImlkIjoiMDFhMGM0OGQtNzgwMS03ZTExLWEwYWUtOWRjNDBmNTYyMTc4Iiwia2lkIjoiTWRmMkFHYlo4SDU2RzVIT3ZvNVA5X1RlVmg1eEhIZEN6SXNTdzE1UmRZMCIsInJpZCI6IjgyOTI2NjRiLTE3MGItNGVjYy1hM2MwLTVkYzEzYWFmNTVjYiJ9.Zl7PobpgNS4-v3KmMwyFztf49_ryewB6vmtECY7Km3dPO5uOnDTCk5gYcYQOsWwkC0m9iQf2Fikf9pAX8IRoCw'
+};       
+var DB_URL=CONFIG.url.replace(/^libsql:\/\//,'https://').replace(/\/+$/,'');
+var CACHE_KEY='hbt-cache-v2';
+
+function emptyState(){return {v:1,settings:{name:'My House Build',budget:0,pin:''},bills:[],labour:[],updatedAt:0}}
+function normalize(s){
+  var b=emptyState();
+  if(!s||typeof s!=='object')return b;
+  b.settings=Object.assign(b.settings,s.settings&&typeof s.settings==='object'?s.settings:{});
+  b.bills=(Array.isArray(s.bills)?s.bills:[]).filter(Boolean).map(function(x){
+    return Object.assign({id:uid(),date:'',supplier:'',billNo:'',vehicle:'none',transport:0,loading:0,status:'paid',note:''},x,{items:Array.isArray(x.items)?x.items.filter(Boolean):[]});
+  });
+  b.labour=(Array.isArray(s.labour)?s.labour:[]).filter(Boolean).map(function(x){
+    return Object.assign({id:uid(),date:'',payType:'daily',from:'',to:'',area:'',contractor:'',status:'paid',note:''},x,{lines:Array.isArray(x.lines)?x.lines.filter(Boolean):[]});
+  });
+  b.updatedAt=num(s.updatedAt);
+  return b;
+}
+
+var state=emptyState();
+var base={};                 /* what Turso is known to hold: key -> canonical JSON text */
+var baseKnown=false,booted=false,connected=false,schemaReady=false,loadError='';
+var flushing=false,flushAgain=false,flushPromise=null,syncBusy=false,retryTimer=null,saveTimer=null;
+var unlocked=false;
+try{unlocked=sessionStorage.getItem('hbt-unlocked')==='1'}catch(e){}
+
+/* canonical JSON (sorted keys) so the same record always produces the same text */
+function canon(v){
+  if(v===undefined)return 'null';
+  if(Array.isArray(v))return '['+v.map(canon).join(',')+']';
+  if(v&&typeof v==='object')return '{'+Object.keys(v).sort().map(function(k){return JSON.stringify(k)+':'+canon(v[k])}).join(',')+'}';
+  return JSON.stringify(v);
+}
+function snapshotMap(s){
+  var m={};
+  s.bills.forEach(function(b){m['bill:'+b.id]=canon(b)});
+  s.labour.forEach(function(e){m['labour:'+e.id]=canon(e)});
+  m['set:name']=String(s.settings.name||'');
+  m['set:budget']=String(num(s.settings.budget));
+  m['set:pin']=String(s.settings.pin||'');
+  return m;
+}
+function diffOps(cur,bs){
+  var ops=[],k;
+  for(k in cur){if(bs[k]!==cur[k])ops.push({k:k,v:cur[k]})}
+  for(k in bs){if(!(k in cur))ops.push({k:k,del:true})}
+  return ops;
+}
+var pendingCount=function(){return diffOps(snapshotMap(state),base).length};
+function applyOp(s,op){
+  var p=op.k.indexOf(':'),kind=op.k.slice(0,p),id=op.k.slice(p+1);
+  if(kind==='set'){if(id==='budget')s.settings.budget=num(op.v);else s.settings[id]=op.v;return}
+  var arr=kind==='bill'?s.bills:s.labour;
+  var i=arr.findIndex(function(x){return x.id===id});
+  if(op.del){if(i>=0)arr.splice(i,1);return}
+  var obj;try{obj=JSON.parse(op.v)}catch(e){return}
+  if(i>=0)arr[i]=obj;else arr.push(obj);
+}
+
+/* Turso HTTP pipeline (Hrana over HTTP) */
+var T=function(s){return {type:'text',value:String(s)}};
+var I=function(n){return {type:'integer',value:String(n)}};
+async function tursoRun(stmts){
+  var reqs=stmts.map(function(s){return {type:'execute',stmt:{sql:s.sql,args:s.args||[]}}});
+  reqs.push({type:'close'});
+  var ctl=new AbortController(),to=setTimeout(function(){ctl.abort()},25000),res;
+  try{
+    res=await fetch(DB_URL+'/v2/pipeline',{method:'POST',headers:{'Authorization':'Bearer '+CONFIG.token,'Content-Type':'application/json'},body:JSON.stringify({requests:reqs}),signal:ctl.signal});
+  }catch(e){
+    throw new Error(e&&e.name==='AbortError'?'The database took too long to answer.':'Can’t reach the database. Check your internet connection.');
+  }finally{clearTimeout(to)}
+  if(!res.ok){
+    var t='';try{t=await res.text()}catch(e){}
+    throw new Error(res.status===401||res.status===403?'The database rejected the access token.':'The database answered with an error ('+res.status+')'+(t?': '+t.slice(0,140):''));
+  }
+  var j=await res.json(),out=[];
+  for(var i=0;i<stmts.length;i++){
+    var r=(j.results||[])[i];
+    if(r&&r.type==='ok')out.push({ok:true,rows:((r.response&&r.response.result&&r.response.result.rows)||[]).map(function(row){return row.map(function(c){return c&&c.type!=='null'?c.value:null})})});
+    else out.push({ok:false,error:(r&&r.error&&r.error.message)||'Unknown database error'});
+  }
+  return out;
+}
+async function ensureSchema(){
+  var r=await tursoRun([
+    {sql:'CREATE TABLE IF NOT EXISTS hb_records (id TEXT PRIMARY KEY, kind TEXT NOT NULL, data TEXT NOT NULL, updated_at INTEGER NOT NULL)'},
+    {sql:'CREATE TABLE IF NOT EXISTS hb_settings (k TEXT PRIMARY KEY, v TEXT NOT NULL)'},
+    {sql:'CREATE INDEX IF NOT EXISTS hb_records_kind ON hb_records(kind)'}
+  ]);
+  r.forEach(function(x){if(!x.ok)throw new Error(x.error)});
+  schemaReady=true;
+}
+async function fetchRemote(){
+  var r=await tursoRun([{sql:'SELECT id, kind, data FROM hb_records'},{sql:'SELECT k, v FROM hb_settings'}]);
+  if(!r[0].ok)throw new Error(r[0].error);
+  if(!r[1].ok)throw new Error(r[1].error);
+  var s=emptyState(),bills=[],labour=[];
+  r[0].rows.forEach(function(row){
+    var o;try{o=JSON.parse(row[2])}catch(e){return}   /* unreadable rows are left alone in the database, never deleted */
+    if(!o||typeof o!=='object')return;
+    o.id=o.id||row[0];
+    (row[1]==='bill'?bills:row[1]==='labour'?labour:[]).push(o);
+  });
+  r[1].rows.forEach(function(row){
+    if(row[0]==='name')s.settings.name=row[1];
+    else if(row[0]==='budget')s.settings.budget=num(row[1]);
+    else if(row[0]==='pin')s.settings.pin=row[1];
+  });
+  s.bills=bills;s.labour=labour;
+  return normalize(s);
+}
+
+/* local copy, used for offline start and to keep unsent changes safe */
+function saveCache(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({state:state,base:base}))}catch(e){}}
+function loadCache(){
+  try{var r=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(r&&r.state&&r.base)return {state:normalize(r.state),base:r.base}}catch(e){}
+  return null;
+}
+
+/* pull from Turso, then lay any not-yet-sent local changes on top so nothing is lost */
+async function syncFromRemote(){
+  if(syncBusy||flushing)return false;
+  syncBusy=true;
+  try{
+    if(!schemaReady)await ensureSchema();
+    var remote=await fetchRemote();
+    /* no awaits below this line, so an edit can't slip in between reading and replacing state */
+    var pending=diffOps(snapshotMap(state),base);
+    var next=remote;
+    pending.forEach(function(op){applyOp(next,op)});
+    var changed=canon(snapshotMap(next))!==canon(snapshotMap(state));
+    base=snapshotMap(remote);
+    state=next;
+    baseKnown=true;connected=true;loadError='';
+    saveCache();
+    return changed;
+  }catch(e){
+    connected=false;loadError=e&&e.message?e.message:'Can’t reach the database.';
+    return false;
+  }finally{syncBusy=false}
+}
+function opToStmt(op){
+  var p=op.k.indexOf(':'),kind=op.k.slice(0,p),id=op.k.slice(p+1);
+  if(kind==='set')return {sql:'INSERT INTO hb_settings (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v',args:[T(id),T(op.v)]};
+  if(op.del)return {sql:'DELETE FROM hb_records WHERE id = ?',args:[T(id)]};
+  return {sql:'INSERT INTO hb_records (id, kind, data, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET kind = excluded.kind, data = excluded.data, updated_at = excluded.updated_at',args:[T(id),T(kind),T(op.v),I(Date.now())]};
+}
+function flush(){
+  if(!baseKnown)return Promise.resolve(false);
+  if(flushing){flushAgain=true;return flushPromise||Promise.resolve(false)}
+  if(syncBusy)return new Promise(function(res){setTimeout(function(){res(flush())},250)});
+  flushPromise=doFlush();
+  return flushPromise;
+}
+async function doFlush(){
+  flushing=true;updateSyncChip();
+  var ok=true;
+  try{
+    if(!schemaReady)await ensureSchema();
+    do{
+      flushAgain=false;
+      var ops=diffOps(snapshotMap(state),base);
+      for(var i=0;i<ops.length&&ok;i+=40){
+        var chunk=ops.slice(i,i+40);
+        var res=await tursoRun(chunk.map(opToStmt));
+        chunk.forEach(function(op,j){
+          if(res[j]&&res[j].ok){if(op.del)delete base[op.k];else base[op.k]=op.v}
+          else ok=false;
+        });
+      }
+      saveCache();
+    }while(flushAgain&&ok);
+  }catch(e){ok=false;loadError=e&&e.message?e.message:'Can’t reach the database.'}
+  flushing=false;
+  if(ok){connected=true;loadError=''}else{connected=false;scheduleRetry()}
+  updateSyncChip();
+  return ok;
+}
+function persist(){
+  state.updatedAt=Date.now();
+  saveCache();
+  updateSyncChip();
+  if(!baseKnown)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(flush,350);
+}
+function scheduleRetry(){
+  if(retryTimer)return;
+  retryTimer=setTimeout(async function(){
+    retryTimer=null;
+    if(flushing||syncBusy){scheduleRetry();return}
+    var changed=await syncFromRemote();
+    booted=true;
+    if((changed||!baseKnown)&&!$('#backdrop'))render();
+    if(connected)flush();else scheduleRetry();
+    updateSyncChip();
+  },8000);
+}
+function pollOnce(){
+  if(document.hidden||!booted||$('#backdrop')||flushing||syncBusy)return;
+  var ae=document.activeElement;
+  if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
+  syncFromRemote().then(function(changed){
+    if(changed)render();
+    if(connected&&pendingCount())flush();
+    else if(!connected)scheduleRetry();
+    updateSyncChip();
+  });
+}
+async function retryNow(){
+  toast('Checking the database…');
+  await syncFromRemote();
+  booted=true;
+  if(connected)await flush();
+  render();
+  toast(connected?'Synced with Turso':'Still offline');
+}
+async function boot(){
+  var c=loadCache();
+  if(c){state=c.state;base=c.base;baseKnown=true}
+  render();
+  await syncFromRemote();
+  booted=true;
+  render();
+  if(connected)flush();else scheduleRetry();
+}
+function updateSyncChip(){
+  var c=$('#syncChip');if(!c)return;
+  var n=baseKnown?pendingCount():0,t;
+  if(!booted)t='⏳ Connecting…';
+  else if(flushing||(connected&&n))t='⏳ Saving…';
+  else if(!connected)t='⚠️ Offline'+(n?', '+n+' waiting to sync':'');
+  else t='☁️ Synced with Turso';
+  c.textContent=t;
+}
+
+/* admin PIN: stored as a hash, checked in the browser (a convenience lock, not real security) */
+async function hashPin(p){
+  try{
+    var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hbt:'+p));
+    return 'h1:'+Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2)}).join('');
+  }catch(e){return 'p:'+p}
+}
+async function pinOk(input){
+  var s=String(state.settings.pin||'');
+  if(s.indexOf('h1:')===0||s.indexOf('p:')===0)return (await hashPin(input))===s;
+  return input===s;
+}
+var isAdmin=function(){return !state.settings.pin||unlocked};
+
+/* ---------- ui state ---------- */
+var ui={tab:'overview',mq:'',mstatus:'all',mcat:'all',lq:'',lpay:'all',lstatus:'all'};
+var sheet=null,draft=null,lastFocus=null,lastCat='cement';
+
+/* ---------- derived numbers ---------- */
+function totals(){
+  var t={mat:0,trans:0,lab:0,due:0,men:0,women:0,menDays:0,womenDays:0};
+  state.bills.forEach(function(b){
+    var i=billItems(b),tr=billTransport(b);
+    t.mat+=i;t.trans+=tr;
+    if(b.status==='due')t.due+=i+tr;
+  });
+  state.labour.forEach(function(e){
+    var s=0;
+    e.lines.forEach(function(l){
+      var a=lineAmt(e,l);s+=a;
+      if(l.gender==='women'){t.women+=a;t.womenDays+=personDays(e,l)}
+      else{t.men+=a;t.menDays+=personDays(e,l)}
+    });
+    t.lab+=s;
+    if(e.status==='due')t.due+=s;
+  });
+  t.total=t.mat+t.trans+t.lab;
+  return t;
+}
+
+/* ---------- rendering: shell ---------- */
+var TABS=[['overview','📊','Overview'],['materials','🧱','Materials'],['labour','👷','Labour']];
+function renderShell(){
+  $('#projName').textContent=state.settings.name||'My House Build';
+  document.title=(state.settings.name||'House Build')+' expense tracker';
+  var admin=isAdmin(),hasPin=!!state.settings.pin;
+  $('#roleChip').textContent=admin?'🛠️ Admin mode':'👀 View only';
+  var lb=$('#lockBtn');
+  if(hasPin){
+    lb.hidden=false;
+    lb.textContent=unlocked?'🔓 Lock admin':'🔒 Admin login';
+    lb.dataset.act=unlocked?'lock':'unlock-sheet';
+  }else lb.hidden=true;
+  $('#tabs').innerHTML=TABS.map(function(t){
+    return '<button class="tab" role="tab" aria-selected="'+(ui.tab===t[0])+'" data-act="tab" data-v="'+t[0]+'"><span aria-hidden="true">'+t[1]+'</span>'+t[2]+'</button>';
+  }).join('');
+}
+function bootHTML(){
+  if(!booted)return '<section class="card empty"><div class="big-emoji" aria-hidden="true">🧱</div><h3>Connecting to your database…</h3><p>Loading your bills and labour payments.</p></section>';
+  return '<section class="card empty"><div class="big-emoji" aria-hidden="true">🚧</div><h3>Can’t reach the database</h3><p>'+esc(loadError||'Check your internet connection.')+' Nothing has been changed.</p><div class="btns"><button class="btn primary" data-act="retry-connect">Try again</button></div></section>';
+}
+function render(){
+  renderShell();
+  updateSyncChip();
+  updateSeedBar();
+  var v=$('#view');
+  if(!baseKnown){v.innerHTML=bootHTML();return}
+  v.innerHTML=ui.tab==='materials'?materialsHTML():ui.tab==='labour'?labourHTML():overviewHTML();
+}
+
+/* ---------- overview ---------- */
+function wallHTML(frac){
+  var rows=[],idx=0,r;
+  for(r=0;r<6;r++){
+    var kinds=r%2===1?['h','f','f','f','f','f','f','h']:['f','f','f','f','f','f','f'];
+    rows.push(kinds.map(function(k){return {k:k,i:idx++}}));
+  }
+  var filled=Math.max(0,Math.min(1,frac))*idx;
+  return rows.slice().reverse().map(function(row){
+    return '<div class="wall-row">'+row.map(function(b){
+      var c='brick'+(b.k==='h'?' half':'');
+      if(b.i+1<=filled+1e-9)c+=' on';else if(b.i<filled)c+=' part';
+      return '<span class="'+c+'" style="--i:'+b.i+'"></span>';
+    }).join('')+'</div>';
+  }).join('');
+}
+function breakdownHTML(t){
+  var map={},rows=[];
+  state.bills.forEach(function(b){b.items.forEach(function(i){var c=catOf(i.cat);map[c.id]=(map[c.id]||0)+itemAmt(i)})});
+  CATS.forEach(function(c){if(map[c.id]>0)rows.push({e:c.emoji,l:c.label,a:map[c.id],k:'m'})});
+  if(t.trans>0)rows.push({e:'🛺',l:'Transport and loading',a:t.trans,k:'t'});
+  if(t.men>0)rows.push({e:'👷‍♂️',l:'Labour, men',a:t.men,k:'l'});
+  if(t.women>0)rows.push({e:'👷‍♀️',l:'Labour, women',a:t.women,k:'l'});
+  if(!rows.length)return '<p class="muted">Add a bill or a labour payment to see the split.</p>';
+  rows.sort(function(a,b){return b.a-a.a});
+  var max=rows[0].a,total=t.total||1;
+  return rows.map(function(r){
+    return '<div class="bar-row"><span aria-hidden="true">'+r.e+'</span><span class="b-label">'+esc(r.l)+'</span><span class="b-amt">'+money(r.a)+'<small class="muted"> '+Math.round(r.a/total*100)+'%</small></span>'+
+      '<div class="bar-track"><i class="k-'+r.k+'" style="width:'+Math.max(2,r.a/max*100)+'%"></i></div></div>';
+  }).join('');
+}
+function weeklyChartHTML(){
+  var map={};
+  function add(ds,k,a){var d=parseD(ds);if(!d||!a)return;var w=isoD(weekStart(d));if(!map[w])map[w]={m:0,t:0,l:0};map[w][k]+=a}
+  state.bills.forEach(function(b){add(b.date,'m',billItems(b));add(b.date,'t',billTransport(b))});
+  state.labour.forEach(function(e){add(e.date,'l',labourTotal(e))});
+  var keys=Object.keys(map);
+  if(!keys.length)return '<p class="muted">Weekly totals appear here once you add entries.</p>';
+  var lastW=weekStart(new Date());
+  keys.forEach(function(k){var d=parseD(k);if(d>lastW)lastW=d});
+  var weeks=[],i;
+  for(i=7;i>=0;i--)weeks.push(addDays(lastW,-7*i));
+  var vals=weeks.map(function(d){var m=map[isoD(d)]||{m:0,t:0,l:0};return {d:d,m:m.m,t:m.t,l:m.l,s:m.m+m.t+m.l}});
+  var max=Math.max.apply(null,vals.map(function(v){return v.s}).concat([1]));
+  var W=640,H=230,pl=8,pr=8,pt=26,pb=32,bw=(W-pl-pr)/8,bar=bw*0.6,ch=H-pt-pb;
+  var out='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Spending in each of the last 8 weeks">';
+  out+='<line class="base" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+(H-pb)+'" y2="'+(H-pb)+'"/>';
+  vals.forEach(function(v,n){
+    var x=pl+n*bw+(bw-bar)/2,y=H-pb;
+    [['m','bm'],['t','bt'],['l','bl']].forEach(function(p){
+      var h=v[p[0]]/max*ch;
+      if(h>0){y-=h;out+='<rect class="'+p[1]+'" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bar.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2"/>'}
+    });
+    if(v.s>0)out+='<text class="tv" x="'+(x+bar/2).toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle">'+compact(v.s)+'</text>';
+    out+='<text class="tx" x="'+(x+bar/2).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle">'+fmtShort(v.d)+'</text>';
+  });
+  out+='</svg><div class="legend"><span>🧱 Materials</span><span>🛺 Transport</span><span>👷 Labour</span><span>Weeks start on Monday</span></div>';
+  return out;
+}
+function latestHTML(){
+  var all=[];
+  state.bills.forEach(function(b){all.push({t:'materials',e:catOf((b.items[0]||{}).cat).emoji,title:b.supplier||'Material bill',sub:fmtDate(b.date)+', '+b.items.length+(b.items.length===1?' item':' items'),a:billTotal(b),d:b.date,c:b.created||0})});
+  state.labour.forEach(function(e){all.push({t:'labour',e:payOf(e.payType).emoji,title:e.area||e.contractor||'Labour payment',sub:fmtDate(e.date)+', '+payOf(e.payType).label.toLowerCase(),a:labourTotal(e),d:e.date,c:e.created||0})});
+  all.sort(function(a,b){return (b.d||'').localeCompare(a.d||'')||b.c-a.c});
+  if(!all.length)return '';
+  return '<section class="card"><h3>Latest entries</h3><div class="latest">'+all.slice(0,6).map(function(x){
+    return '<button class="latest-row" data-act="tab" data-v="'+x.t+'"><span class="l-emoji" aria-hidden="true">'+x.e+'</span><span><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></span><span class="amt">'+money(x.a)+'</span></button>';
+  }).join('')+'</div></section>';
+}
+function overviewHTML(){
+  var t=totals(),admin=isAdmin(),budget=num(state.settings.budget);
+  var empty=!state.bills.length&&!state.labour.length;
+  if(empty){
+    return '<section class="card empty"><div class="big-emoji" aria-hidden="true">🏗️🧱👷‍♀️</div><h3>Let’s start building your ledger</h3>'+
+      '<p>Record every bill for cement, steel and sand, plus the daily, weekly and contract wages you pay your crew.</p>'+
+      (admin?'<div class="btns"><button class="btn primary" data-act="add-bill">🧱 Add material bill</button><button class="btn soft" data-act="add-labour">👷 Add labour payment</button><button class="btn soft" data-act="sample">Try with sample data</button></div>':'<p>Nothing has been recorded yet.</p>')+
+      '</section>';
+  }
+  var pct=budget>0?t.total/budget:0,over=budget>0&&t.total>budget;
+  var stat='<div class="stat-big">'+money(t.total)+'</div><p class="muted">spent so far</p><div class="stat-lines">';
+  if(budget>0){
+    stat+='<p>Budget <b>'+money(budget)+'</b>, <b>'+Math.round(pct*100)+'%</b> used</p>';
+    stat+=over?'<p><span class="over-chip">🚧 Over budget by '+money(t.total-budget)+'</span></p>':'<p><b>'+money(budget-t.total)+'</b> left to spend</p>';
+  }else{
+    stat+='<p class="muted">No budget set yet.</p>'+(admin?'<p><button class="btn soft small" data-act="settings">Set a budget to fill the wall</button></p>':'');
+  }
+  stat+='</div>';
+  if(t.due>0)stat+='<div class="due-chip">⏳ '+money(t.due)+' yet to pay</div>';
+  var tile=function(k,e,label,amt){
+    return '<div class="tile '+k+'"><span class="tile-emoji" aria-hidden="true">'+e+'</span><b>'+money(amt)+'</b><span class="lbl">'+label+(t.total>0?', '+Math.round(amt/t.total*100)+'%':'')+'</span></div>';
+  };
+  return '<section class="card hero"><div><div class="wall'+(over?' over':'')+'" role="img" aria-label="Budget wall, '+Math.round(Math.min(pct,1)*100)+' percent built">'+wallHTML(budget>0?pct:0)+'</div></div><div>'+stat+'</div></section>'+
+    '<div class="tiles">'+tile('m','🧱','Materials',t.mat)+tile('t','🛺','Transport and loading',t.trans)+tile('l','👷','Labour',t.lab)+'</div>'+
+    '<div class="grid2"><section class="card"><h3>Where the money went</h3>'+breakdownHTML(t)+'</section><section class="card"><h3>Weekly spend</h3>'+weeklyChartHTML()+'</section></div>'+
+    latestHTML();
+}
+
+/* ---------- shared card bits ---------- */
+function zigHTML(){return '<svg class="zig" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 240 8"><defs><pattern id="zg" width="12" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H12L6 8Z" fill="currentColor"/></pattern></defs><rect width="240" height="8" fill="url(#zg)"/></svg>'}
+function statusBtn(kind,item,admin){
+  var due=item.status==='due';
+  return '<button class="status '+(due?'due':'paid')+'" '+(admin?'data-act="toggle-'+kind+'" data-id="'+esc(item.id)+'" title="Tap to mark as '+(due?'paid':'due')+'"':'disabled')+'>'+(due?'⏳ Due':'✅ Paid')+'</button>';
+}
+function actionsHTML(kind,id,admin){
+  if(!admin)return '';
+  return '<div class="r-actions"><button class="icon-btn" data-act="edit-'+kind+'" data-id="'+esc(id)+'" aria-label="Edit">✏️</button><button class="icon-btn" data-act="del-'+kind+'" data-id="'+esc(id)+'" aria-label="Delete">🗑️</button></div>';
+}
+function chipRow(items,cur,act){
+  return items.map(function(i){return '<button class="chip" data-act="'+act+'" data-v="'+esc(i[0])+'" aria-pressed="'+(cur===i[0])+'">'+i[1]+'</button>'}).join('');
+}
+
+/* ---------- materials ---------- */
+function filteredBills(){
+  var q=ui.mq.trim().toLowerCase();
+  return state.bills.filter(function(b){
+    if(ui.mstatus!=='all'&&(b.status||'paid')!==ui.mstatus)return false;
+    if(ui.mcat!=='all'&&!b.items.some(function(i){return catOf(i.cat).id===ui.mcat}))return false;
+    if(q){var hay=[b.supplier,b.billNo,b.note].concat(b.items.map(function(i){return i.name})).join(' ').toLowerCase();if(hay.indexOf(q)<0)return false}
+    return true;
+  }).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')||(b.created||0)-(a.created||0)});
+}
+function billCard(b,admin){
+  var veh=vehOf(b.vehicle);
+  var items=b.items.map(function(i){
+    var c=catOf(i.cat);
+    return '<li class="r-item"><span class="r-emoji" aria-hidden="true">'+c.emoji+'</span><span class="r-name">'+esc(i.name||c.label)+'<small>'+esc(i.qty)+' '+esc(i.unit)+' × '+money(i.rate)+'</small></span><span class="r-amt">'+money(itemAmt(i))+'</span></li>';
+  }).join('');
+  if(num(b.transport)>0)items+='<li class="r-item charge"><span class="r-emoji" aria-hidden="true">'+veh.emoji+'</span><span class="r-name">'+esc(veh.id==='none'?'Transport':veh.label+' charge')+'</span><span class="r-amt">'+money(b.transport)+'</span></li>';
+  if(num(b.loading)>0)items+='<li class="r-item charge"><span class="r-emoji" aria-hidden="true">🏋️</span><span class="r-name">Loading and unloading</span><span class="r-amt">'+money(b.loading)+'</span></li>';
+  return '<article class="receipt mat"><div class="r-head"><div><h4>'+esc(b.supplier||'Material bill')+'</h4><small>'+esc(fmtDate(b.date))+(b.billNo?', bill '+esc(b.billNo):'')+'</small></div></div>'+
+    '<ul class="r-list">'+items+'</ul><div class="r-total"><span>Total</span><span>'+money(billTotal(b))+'</span></div>'+
+    (b.note?'<p class="r-note">'+esc(b.note)+'</p>':'')+
+    '<div class="r-foot">'+statusBtn('bill',b,admin)+actionsHTML('bill',b.id,admin)+'</div>'+zigHTML()+'</article>';
+}
+function matListHTML(){
+  var admin=isAdmin(),list=filteredBills();
+  if(!state.bills.length)return '<div class="card empty" style="grid-column:1/-1"><div class="big-emoji" aria-hidden="true">🧾</div><h3>No material bills yet</h3><p>Add each purchase with its items, plus the auto or tempo fare that brought it to site.</p>'+(admin?'<button class="btn primary" data-act="add-bill">+ Add bill</button>':'')+'</div>';
+  if(!list.length)return '<div class="card empty" style="grid-column:1/-1"><div class="big-emoji" aria-hidden="true">🔍</div><h3>No bills match</h3><p>Try a different search or clear the filters.</p><button class="btn soft" data-act="clear-m">Clear filters</button></div>';
+  return list.map(function(b){return billCard(b,admin)}).join('');
+}
+function materialsHTML(){
+  var admin=isAdmin(),total=0,due=0;
+  state.bills.forEach(function(b){var x=billTotal(b);total+=x;if(b.status==='due')due+=x});
+  var present={};state.bills.forEach(function(b){b.items.forEach(function(i){present[catOf(i.cat).id]=1})});
+  var catChips=[['all','All categories']].concat(CATS.filter(function(c){return present[c.id]}).map(function(c){return [c.id,c.emoji+' '+esc(c.label)]}));
+  return '<div class="page-head"><div><h2>🧱 Material bills</h2><p class="muted">'+state.bills.length+(state.bills.length===1?' bill, ':' bills, ')+money(total)+' in total'+(due>0?', '+money(due)+' due':'')+'</p></div>'+(admin?'<button class="btn primary" data-act="add-bill">+ Add bill</button>':'')+'</div>'+
+    '<div class="toolbar"><input id="mQ" class="search" type="search" placeholder="Search supplier, item or bill number" aria-label="Search bills" value="'+esc(ui.mq)+'"></div>'+
+    '<div class="chips" aria-label="Filter by payment status">'+chipRow([['all','All'],['paid','✅ Paid'],['due','⏳ Due']],ui.mstatus,'mstatus')+'</div>'+
+    (catChips.length>2?'<div class="chips" aria-label="Filter by category">'+chipRow(catChips,ui.mcat,'mcat')+'</div>':'')+
+    '<div class="cards list-gap" id="matList">'+matListHTML()+'</div>';
+}
+
+/* ---------- labour ---------- */
+function filteredLabour(){
+  var q=ui.lq.trim().toLowerCase();
+  return state.labour.filter(function(e){
+    if(ui.lpay!=='all'&&e.payType!==ui.lpay)return false;
+    if(ui.lstatus!=='all'&&(e.status||'paid')!==ui.lstatus)return false;
+    if(q){var hay=[e.area,e.contractor,e.note].concat(e.lines.map(function(l){return l.role})).join(' ').toLowerCase();if(hay.indexOf(q)<0)return false}
+    return true;
+  }).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')||(b.created||0)-(a.created||0)});
+}
+function labourCard(e,admin){
+  var pay=payOf(e.payType);
+  var lines=e.lines.map(function(l){
+    var g=genOf(l.gender),n=num(l.count),who=n+' '+(n===1?g.one:g.label.toLowerCase());
+    var calc=e.payType==='once'?'fixed amount':e.payType==='weekly'?n+' × '+money(l.rate)+' × '+num(l.days)+(num(l.days)===1?' day':' days'):n+' × '+money(l.rate)+' per day';
+    return '<li class="r-item"><span class="r-emoji" aria-hidden="true">'+g.emoji+'</span><span class="r-name">'+esc(l.role||'Worker')+'<small>'+esc(who)+', '+esc(calc)+'</small></span><span class="r-amt">'+money(lineAmt(e,l))+'</span></li>';
+  }).join('');
+  var when=e.payType==='weekly'&&parseD(e.from)&&parseD(e.to)?fmtDate(e.from)+' to '+fmtDate(e.to):fmtDate(e.date);
+  var sub=e.payType==='weekly'?'Paid '+fmtDate(e.date):(e.payType==='once'&&e.contractor?'Contractor: '+e.contractor:'');
+  return '<article class="receipt lab"><div class="r-head"><div><h4>'+esc(e.area||e.contractor||'Labour payment')+'</h4><small>'+esc(when)+'</small>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div><span class="badge">'+pay.emoji+' '+pay.label+'</span></div>'+
+    '<ul class="r-list">'+lines+'</ul><div class="r-total"><span>'+heads(e)+' workers</span><span>'+money(labourTotal(e))+'</span></div>'+
+    (e.note?'<p class="r-note">'+esc(e.note)+'</p>':'')+
+    '<div class="r-foot">'+statusBtn('labour',e,admin)+actionsHTML('labour',e.id,admin)+'</div>'+zigHTML()+'</article>';
+}
+function labListHTML(){
+  var admin=isAdmin(),list=filteredLabour();
+  if(!state.labour.length)return '<div class="card empty" style="grid-column:1/-1"><div class="big-emoji" aria-hidden="true">👷‍♀️👷‍♂️</div><h3>No labour payments yet</h3><p>Record daily wages, the weekly settlement or a one-time contract for masons, helpers and the rest of the crew.</p>'+(admin?'<button class="btn primary" data-act="add-labour">+ Add payment</button>':'')+'</div>';
+  if(!list.length)return '<div class="card empty" style="grid-column:1/-1"><div class="big-emoji" aria-hidden="true">🔍</div><h3>No payments match</h3><p>Try a different search or clear the filters.</p><button class="btn soft" data-act="clear-l">Clear filters</button></div>';
+  return list.map(function(e){return labourCard(e,admin)}).join('');
+}
+function labourHTML(){
+  var admin=isAdmin(),t=totals();
+  var ws=isoD(weekStart(new Date())),we=isoD(addDays(weekStart(new Date()),6)),week=0,due=0;
+  state.labour.forEach(function(e){var x=labourTotal(e);if(e.date>=ws&&e.date<=we)week+=x;if(e.status==='due')due+=x});
+  var strip='<div class="stat-strip">'+
+    '<div class="tile l"><span class="tile-emoji" aria-hidden="true">👷‍♂️</span><b>'+money(t.men)+'</b><span class="lbl">Men</span><small>'+inr.format(t.menDays)+' person-days</small></div>'+
+    '<div class="tile l"><span class="tile-emoji" aria-hidden="true">👷‍♀️</span><b>'+money(t.women)+'</b><span class="lbl">Women</span><small>'+inr.format(t.womenDays)+' person-days</small></div>'+
+    '<div class="tile t"><span class="tile-emoji" aria-hidden="true">🗓️</span><b>'+money(week)+'</b><span class="lbl">This week</span><small>Monday to Sunday</small></div>'+
+    '<div class="tile m"><span class="tile-emoji" aria-hidden="true">⏳</span><b>'+money(due)+'</b><span class="lbl">Labour due</span><small>Not yet paid</small></div></div>';
+  return '<div class="page-head"><div><h2>👷 Labour payments</h2><p class="muted">'+state.labour.length+(state.labour.length===1?' payment, ':' payments, ')+money(t.lab)+' in total</p></div>'+(admin?'<button class="btn primary" data-act="add-labour">+ Add payment</button>':'')+'</div>'+
+    strip+
+    '<div class="toolbar"><input id="lQ" class="search" type="search" placeholder="Search work, contractor or role" aria-label="Search labour payments" value="'+esc(ui.lq)+'"></div>'+
+    '<div class="chips" aria-label="Filter by payment type">'+chipRow([['all','All'],['daily','📅 Daily'],['weekly','🗓️ Weekly'],['once','🤝 One-time']],ui.lpay,'lpay')+'</div>'+
+    '<div class="chips" aria-label="Filter by payment status">'+chipRow([['all','Any status'],['paid','✅ Paid'],['due','⏳ Due']],ui.lstatus,'lstatus')+'</div>'+
+    '<div class="cards list-gap" id="labList">'+labListHTML()+'</div>';
+}
+
+/* ---------- sheets ---------- */
+function openSheet(title,body,foot,narrow){
+  var old=$('#backdrop');if(old)old.remove();
+  var w=document.createElement('div');
+  w.className='backdrop';w.id='backdrop';
+  w.innerHTML='<div class="sheet'+(narrow?' narrow':'')+'" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-head"><h3 id="sheetTitle">'+title+'</h3><button class="icon-btn" data-act="close" aria-label="Close">✕</button></div><div class="sheet-body" id="sheetBody">'+body+'</div>'+(foot?'<div class="sheet-foot">'+foot+'</div>':'')+'</div>';
+  lastFocus=document.activeElement;
+  document.body.appendChild(w);
+  document.body.classList.add('noscroll');
+  var f=w.querySelector('[data-first]')||w.querySelector('input,select,textarea');
+  if(f)try{f.focus()}catch(e){}
+}
+function closeSheet(keepFocus){
+  var w=$('#backdrop');if(w)w.remove();
+  document.body.classList.remove('noscroll');
+  sheet=null;draft=null;
+  if(!keepFocus&&lastFocus&&lastFocus.focus)try{lastFocus.focus()}catch(e){}
+}
+function formErr(msg){
+  var b=$('#sheetBody');if(!b)return;
+  var e=$('#formErr');
+  if(!e){e=document.createElement('div');e.id='formErr';e.className='err';e.setAttribute('role','alert');b.insertBefore(e,b.firstChild)}
+  e.textContent=msg;b.scrollTop=0;
+}
+var toastT;
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2200)}
+var opts=function(list,cur,fn){return list.map(function(x){var v=fn(x);return '<option value="'+esc(v[0])+'"'+(v[0]===cur?' selected':'')+'>'+esc(v[1])+'</option>'}).join('')};
+var numIn=function(attrs,val,ph){return '<input type="number" inputmode="decimal" min="0" step="any" '+attrs+' value="'+esc(nv(val))+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>'};
+var statusSeg=function(cur){return '<div class="seg" role="group" aria-label="Payment status"><button type="button" data-act="set-status" data-v="paid" aria-pressed="'+(cur!=='due')+'">✅ Paid</button><button type="button" data-act="set-status" data-v="due" aria-pressed="'+(cur==='due')+'">⏳ Due</button></div>'};
+
+/* material bill form */
+function newItem(){return {id:uid(),cat:lastCat,name:'',qty:'',unit:'nos',rate:''}}
+function openBillSheet(id){
+  if(!isAdmin())return;
+  var ex=id?state.bills.filter(function(b){return b.id===id})[0]:null;
+  draft=ex?clone(ex):{id:uid(),date:today(),supplier:'',billNo:'',items:[newItem()],vehicle:'auto',transport:'',loading:'',status:'paid',note:'',created:Date.now()};
+  if(!draft.items.length)draft.items.push(newItem());
+  sheet={type:'bill',isNew:!ex};
+  var sup={};state.bills.forEach(function(b){if(b.supplier)sup[b.supplier]=1});
+  var body='<div class="form-grid">'+
+    '<label class="fld"><span>Bill date</span><input type="date" data-k="date" value="'+esc(draft.date)+'"></label>'+
+    '<label class="fld"><span>Supplier or shop</span><input type="text" data-k="supplier" list="dlSup" autocomplete="off" placeholder="e.g. Sri Lakshmi Traders" value="'+esc(draft.supplier)+'" data-first></label>'+
+    '<label class="fld"><span>Bill number</span><input type="text" data-k="billNo" placeholder="Optional" value="'+esc(draft.billNo)+'"></label></div>'+
+    '<datalist id="dlSup">'+Object.keys(sup).map(function(s){return '<option value="'+esc(s)+'">'}).join('')+'</datalist>'+
+    '<fieldset class="block"><legend>🧾 Items on this bill</legend><div id="billRows"></div><button type="button" class="btn soft" data-act="add-item">+ Add another item</button></fieldset>'+
+    '<fieldset class="block auto"><legend>🛺 Transport and loading</legend><div class="form-grid">'+
+    '<label class="fld"><span>Vehicle</span><select data-k="vehicle">'+opts(VEHICLES,draft.vehicle,function(v){return [v.id,v.emoji+' '+v.label]})+'</select></label>'+
+    '<label class="fld"><span>Transport charge (₹)</span>'+numIn('data-k="transport"',draft.transport,'Auto or tempo fare')+'</label>'+
+    '<label class="fld"><span>Loading and unloading (₹)</span>'+numIn('data-k="loading"',draft.loading,'Hamali')+'</label></div></fieldset>'+
+    '<div class="form-grid"><div class="fld"><span>Payment status</span><div id="statusHost">'+statusSeg(draft.status)+'</div></div>'+
+    '<label class="fld"><span>Note</span><textarea data-k="note" placeholder="Optional, for example who received the load">'+esc(draft.note)+'</textarea></label></div>';
+  var foot='<div class="foot-total" id="footTotal"></div><div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="save-bill">Save bill</button></div>';
+  openSheet(sheet.isNew?'Add material bill':'Edit material bill',body,foot);
+  renderBillRows();
+}
+function billRowHTML(it,i,many){
+  var c=catOf(it.cat);
+  return '<div class="row item-row" data-i="'+i+'">'+
+    '<label class="cell c-cat"><span>Category</span><select data-r="cat">'+opts(CATS,c.id,function(x){return [x.id,x.emoji+' '+x.label]})+'</select></label>'+
+    '<label class="cell c-name"><span>Item</span><input type="text" data-r="name" autocomplete="off" value="'+esc(it.name)+'" placeholder="'+esc(c.ph)+'"></label>'+
+    '<label class="cell c-qty"><span>Quantity</span>'+numIn('data-r="qty"',it.qty)+'</label>'+
+    '<label class="cell c-unit"><span>Unit</span><select data-r="unit">'+opts(UNITS,it.unit,function(u){return [u,u]})+'</select></label>'+
+    '<label class="cell c-rate"><span>Rate (₹)</span>'+numIn('data-r="rate"',it.rate)+'</label>'+
+    '<div class="cell c-out"><span>Amount</span><output>'+money(itemAmt(it))+'</output></div>'+
+    (many?'<button type="button" class="icon-btn c-x" data-act="del-item" data-i="'+i+'" aria-label="Remove item '+(i+1)+'">✕</button>':'<span class="c-x"></span>')+'</div>';
+}
+function renderBillRows(focusLast){
+  var host=$('#billRows');if(!host)return;
+  host.innerHTML=draft.items.map(function(it,i){return billRowHTML(it,i,draft.items.length>1)}).join('');
+  updateBillTotals();
+  if(focusLast){var r=$$('.item-row',host),l=r[r.length-1];if(l)l.querySelector('[data-r="name"]').focus()}
+}
+function updateBillTotals(){
+  var f=$('#footTotal');if(!f)return;
+  var i=draft.items.reduce(function(s,x){return s+itemAmt(x)},0),t=num(draft.transport)+num(draft.loading);
+  f.innerHTML='<span>Items '+money(i)+'</span><span>Transport and loading '+money(t)+'</span><strong>Bill total '+money(i+t)+'</strong>';
+}
+function saveBill(){
+  if(!isAdmin())return;
+  var d=draft;
+  if(!parseD(d.date))return formErr('Pick the bill date.');
+  var items=d.items.filter(function(i){return (i.name||'').trim()||num(i.qty)||num(i.rate)});
+  if(!items.length)return formErr('Add at least one item with a quantity and rate.');
+  for(var k=0;k<items.length;k++){if(!(num(items[k].qty)>0&&num(items[k].rate)>0))return formErr('Item '+(k+1)+' needs a quantity and a rate above zero.')}
+  var bill={id:d.id,date:d.date,supplier:(d.supplier||'').trim(),billNo:(d.billNo||'').trim(),
+    items:items.map(function(i){return {id:i.id||uid(),cat:i.cat,name:(i.name||'').trim(),qty:num(i.qty),unit:i.unit,rate:num(i.rate)}}),
+    vehicle:d.vehicle,transport:num(d.transport),loading:num(d.loading),status:d.status==='due'?'due':'paid',note:(d.note||'').trim(),created:d.created||Date.now()};
+  var idx=state.bills.findIndex(function(b){return b.id===bill.id});
+  if(idx>=0)state.bills[idx]=bill;else state.bills.push(bill);
+  lastCat=items[items.length-1].cat;
+  persist();closeSheet();render();toast('Bill saved');
+}
+
+/* labour form */
+function newLine(g){return {id:uid(),gender:g||'men',role:g==='women'?'Helper (Kooli)':'Mason (Mestri)',count:'',rate:'',days:'6',amount:''}}
+function suggestRate(role,gender){
+  var list=state.labour.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')});
+  for(var i=0;i<list.length;i++){
+    if(list[i].payType==='once')continue;
+    for(var j=0;j<list[i].lines.length;j++){var l=list[i].lines[j];if(l.role===role&&l.gender===gender&&num(l.rate)>0)return num(l.rate)}
+  }
+  return 0;
+}
+function openLabourSheet(id){
+  if(!isAdmin())return;
+  var ex=id?state.labour.filter(function(e){return e.id===id})[0]:null;
+  var ws=weekStart(new Date());
+  draft=ex?clone(ex):{id:uid(),date:today(),payType:'daily',from:isoD(ws),to:isoD(addDays(ws,5)),area:'',contractor:'',lines:[newLine('men')],status:'paid',note:'',created:Date.now()};
+  if(!draft.lines.length)draft.lines.push(newLine('men'));
+  if(!draft.from){draft.from=isoD(ws);draft.to=isoD(addDays(ws,5))}
+  sheet={type:'labour',isNew:!ex};
+  var areas={};AREAS.forEach(function(a){areas[a]=1});state.labour.forEach(function(e){if(e.area)areas[e.area]=1});
+  var body='<div class="paytypes" id="payHost" role="group" aria-label="Payment type"></div>'+
+    '<div class="form-grid">'+
+    '<label class="fld"><span>Paid on</span><input type="date" data-k="date" value="'+esc(draft.date)+'"></label>'+
+    '<label class="fld" data-week><span>Week from</span><input type="date" data-k="from" value="'+esc(draft.from)+'"></label>'+
+    '<label class="fld" data-week><span>Week to</span><input type="date" data-k="to" value="'+esc(draft.to)+'"></label>'+
+    '<label class="fld"><span>Work or area</span><input type="text" data-k="area" list="dlArea" autocomplete="off" placeholder="e.g. Slab shuttering" value="'+esc(draft.area)+'" data-first></label>'+
+    '<label class="fld" data-once><span>Contractor or gang name</span><input type="text" data-k="contractor" placeholder="e.g. Basavaraj gang" value="'+esc(draft.contractor)+'"></label></div>'+
+    '<datalist id="dlArea">'+Object.keys(areas).map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>'+
+    '<fieldset class="block"><legend>👷 Crew</legend><div id="crewRows"></div><div class="add-row"><button type="button" class="btn soft" data-act="add-crew" data-g="men">👷‍♂️ Add men</button><button type="button" class="btn soft" data-act="add-crew" data-g="women">👷‍♀️ Add women</button></div></fieldset>'+
+    '<div class="form-grid"><div class="fld"><span>Payment status</span><div id="statusHost">'+statusSeg(draft.status)+'</div></div>'+
+    '<label class="fld"><span>Note</span><textarea data-k="note" placeholder="Optional">'+esc(draft.note)+'</textarea></label></div>';
+  var foot='<div class="foot-total" id="footTotal"></div><div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="save-labour">Save payment</button></div>';
+  openSheet(sheet.isNew?'Add labour payment':'Edit labour payment',body,foot);
+  applyPayType();
+}
+function applyPayType(){
+  var host=$('#payHost');if(!host)return;
+  host.innerHTML=Object.keys(PAY).map(function(k){
+    var p=PAY[k];return '<button type="button" class="paytype" data-act="set-paytype" data-v="'+k+'" aria-pressed="'+(draft.payType===k)+'"><span class="pe" aria-hidden="true">'+p.emoji+'</span><b>'+p.label+'</b><small>'+p.hint+'</small></button>';
+  }).join('');
+  $$('[data-week]').forEach(function(e){e.hidden=draft.payType!=='weekly'});
+  $$('[data-once]').forEach(function(e){e.hidden=draft.payType!=='once'});
+  renderCrewRows();
+}
+function crewRowHTML(l,i,many){
+  var m=draft.payType,g=genOf(l.gender);
+  var out='<div class="row crew-row '+m+'" data-i="'+i+'">'+
+    '<label class="cell c-g"><span>Group</span><select data-r="gender">'+opts(['men','women'],l.gender==='women'?'women':'men',function(k){return [k,GENDER[k].emoji+' '+GENDER[k].label]})+'</select></label>'+
+    '<label class="cell c-r"><span>Role</span><select data-r="role">'+opts(ROLES,l.role,function(r){return [r,r]})+'</select></label>'+
+    '<label class="cell c-n"><span>How many</span>'+numIn('data-r="count"',l.count)+'</label>';
+  if(m!=='once')out+='<label class="cell c-rate"><span>Rate per day (₹)</span>'+numIn('data-r="rate"',l.rate)+'</label>';
+  if(m==='weekly')out+='<label class="cell c-days"><span>Days worked</span>'+numIn('data-r="days"',l.days)+'</label>';
+  if(m==='once')out+='<label class="cell c-amt"><span>Amount agreed (₹)</span>'+numIn('data-r="amount"',l.amount)+'</label>';
+  else out+='<div class="cell c-out"><span>Amount</span><output>'+money(lineAmt(draft,l))+'</output></div>';
+  out+=many?'<button type="button" class="icon-btn c-x" data-act="del-crew" data-i="'+i+'" aria-label="Remove crew row '+(i+1)+'">✕</button>':'<span class="c-x"></span>';
+  return out+'</div>';
+}
+function renderCrewRows(focusLast){
+  var host=$('#crewRows');if(!host)return;
+  host.innerHTML=draft.lines.map(function(l,i){return crewRowHTML(l,i,draft.lines.length>1)}).join('');
+  updateLabourTotals();
+  if(focusLast){var r=$$('.crew-row',host),l=r[r.length-1];if(l){var c=l.querySelector('[data-r="count"]');if(c)c.focus()}}
+}
+function updateLabourTotals(){
+  var f=$('#footTotal');if(!f)return;
+  var total=labourTotal(draft),h=heads(draft),pd=draft.lines.reduce(function(s,l){return s+personDays(draft,l)},0);
+  f.innerHTML='<span>'+h+' workers</span>'+(draft.payType==='once'?'':'<span>'+inr.format(pd)+' person-days</span>')+'<strong>Total '+money(total)+'</strong>';
+}
+function saveLabour(){
+  if(!isAdmin())return;
+  var d=draft;
+  if(!parseD(d.date))return formErr('Pick the date you paid on.');
+  if(d.payType==='weekly'){
+    if(!parseD(d.from)||!parseD(d.to))return formErr('Pick the first and last day of the week.');
+    if(d.from>d.to)return formErr('The week can’t end before it starts.');
+  }
+  var lines=d.lines.filter(function(l){return num(l.count)||num(l.rate)||num(l.amount)});
+  if(!lines.length)return formErr('Add at least one crew row with a head count.');
+  for(var k=0;k<lines.length;k++){
+    var l=lines[k];
+    if(!(num(l.count)>0))return formErr('Crew row '+(k+1)+' needs a head count above zero.');
+    if(d.payType==='once'){if(!(num(l.amount)>0))return formErr('Crew row '+(k+1)+' needs the amount agreed.')}
+    else{
+      if(!(num(l.rate)>0))return formErr('Crew row '+(k+1)+' needs a daily rate.');
+      if(d.payType==='weekly'&&!(num(l.days)>0))return formErr('Crew row '+(k+1)+' needs the days worked.');
+    }
+  }
+  var e={id:d.id,date:d.date,payType:d.payType,from:d.payType==='weekly'?d.from:'',to:d.payType==='weekly'?d.to:'',area:(d.area||'').trim(),contractor:d.payType==='once'?(d.contractor||'').trim():'',
+    lines:lines.map(function(l){return {id:l.id||uid(),gender:l.gender==='women'?'women':'men',role:l.role,count:num(l.count),rate:d.payType==='once'?0:num(l.rate),days:d.payType==='weekly'?num(l.days):1,amount:d.payType==='once'?num(l.amount):0}}),
+    status:d.status==='due'?'due':'paid',note:(d.note||'').trim(),created:d.created||Date.now()};
+  var idx=state.labour.findIndex(function(x){return x.id===e.id});
+  if(idx>=0)state.labour[idx]=e;else state.labour.push(e);
+  persist();closeSheet();render();toast('Payment saved');
+}
+
+/* delete confirm */
+function confirmDelete(kind,id){
+  if(!isAdmin())return;
+  var item=(kind==='bill'?state.bills:state.labour).filter(function(x){return x.id===id})[0];if(!item)return;
+  var name=kind==='bill'?(item.supplier||'this bill'):(item.area||item.contractor||'this payment');
+  var amt=kind==='bill'?billTotal(item):labourTotal(item);
+  sheet={type:'delete',kind:kind,id:id};
+  openSheet(kind==='bill'?'Delete this bill?':'Delete this payment?','<p>'+esc(name)+' for <b>'+money(amt)+'</b> will be removed from your totals. This can’t be undone.</p>','<div class="foot-btns"><button class="btn ghost" data-act="close" data-first>Cancel</button><button class="btn danger" data-act="do-delete">'+(kind==='bill'?'Delete bill':'Delete payment')+'</button></div>',true);
+}
+
+/* lock */
+function openUnlock(){
+  sheet={type:'unlock'};
+  openSheet('Admin login','<p class="muted" style="margin-bottom:.7rem">Enter the admin PIN to add, edit or delete entries.</p><label class="fld"><span>Admin PIN</span><input type="password" inputmode="numeric" autocomplete="off" id="pinIn" data-first></label><div id="pinErr"></div>','<div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="unlock">Unlock admin</button></div>',true);
+}
+async function doUnlock(){
+  var v=($('#pinIn')||{}).value||'';
+  if(await pinOk(v)){
+    unlocked=true;try{sessionStorage.setItem('hbt-unlocked','1')}catch(e){}
+    closeSheet();render();toast('Admin unlocked');
+  }else{var pe=$('#pinErr');if(pe)pe.innerHTML='<div class="err" role="alert" style="margin-top:.7rem">That PIN doesn’t match. Try again.</div>'}
+}
+
+/* settings */
+function saveFile(name,text,mime){
+  var b=new Blob([text],{type:mime||'text/plain'}),u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(u)},2000);
+}
+function openSettings(){
+  var admin=isAdmin(),hasPin=!!state.settings.pin;
+  sheet={type:'settings'};
+  var body='<div class="settings-sec"><h4>☁️ Database</h4><p class="muted" id="dbStatus">'+esc($('#syncChip').textContent)+'. Everything you enter is saved to your Turso database as JSON records and reloaded from there on every device.</p><button class="btn soft" data-act="sync-now">Sync now</button></div>';
+  if(admin){
+    body+='<div class="settings-sec"><h4>🏠 Project</h4><div class="form-grid"><label class="fld"><span>Project name</span><input type="text" id="setName" value="'+esc(state.settings.name)+'" data-first></label>'+
+      '<label class="fld"><span>Total budget (₹)</span>'+numIn('id="setBudget"',state.settings.budget,'e.g. 2500000')+'</label></div></div>'+
+      '<div class="settings-sec"><h4>🔒 Admin PIN</h4><p class="muted">Set a PIN and this page opens in view-only mode until someone enters it. It is a simple lock for a shared phone, not a security vault.</p>'+
+      '<label class="fld"><span>'+(hasPin?'New PIN (leave blank to keep the current one)':'PIN (numbers, 4 or more digits)')+'</span><input type="password" inputmode="numeric" autocomplete="off" id="setPin" value=""></label>'+
+      (hasPin?'<p style="margin-top:.5rem"><button class="btn soft small" data-act="remove-pin">Remove PIN</button></p>':'')+'</div>';
+  }
+  body+='<div class="settings-sec"><h4>📤 Export</h4><p class="muted">One row per item, charge and crew line, ready for Excel or Google Sheets.</p><button class="btn soft" data-act="export">Export CSV</button></div>';
+  if(admin){
+    body+='<div class="settings-sec"><h4>🗂️ Backup and restore</h4><p class="muted">Download a backup any time. To move data in, for example from the earlier version of this tracker, paste its backup text below and choose Import. Importing only adds or refreshes records by their id, so nothing already in the database is removed and importing twice never creates duplicates.</p>'+
+      '<textarea id="backupTxt" style="min-height:110px;font-size:.8rem" aria-label="Backup data">'+esc(JSON.stringify(state))+'</textarea>'+
+      '<div class="add-row" style="margin-top:.5rem"><button class="btn soft" data-act="download-backup">Download backup</button><button class="btn soft" data-act="copy-backup">Copy backup</button><button class="btn primary" data-act="restore">Import into database</button></div><div id="backupMsg"></div></div>'+
+      snapshotSecHTML()+'<div class="settings-sec"><h4>🧪 Sample data and reset</h4><p class="muted">Sample data fills the tracker with example bills and wages so you can see how it works. Erasing downloads a backup first.</p><div class="add-row"><button class="btn soft" data-act="sample">Add sample data</button><button class="btn danger" data-act="reset-ask">Erase everything</button></div></div>';
+  }
+  openSheet('Settings',body,admin?'<div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="save-settings">Save settings</button></div>':'<div class="foot-btns"><button class="btn ghost" data-act="close">Close</button></div>');
+}
+async function saveSettings(){
+  var pin=($('#setPin').value||'').trim();
+  if(pin&&!/^\d{4,}$/.test(pin))return formErr('The PIN needs 4 or more digits, numbers only.');
+  state.settings.name=($('#setName').value||'').trim()||'My House Build';
+  state.settings.budget=num($('#setBudget').value);
+  if(pin){state.settings.pin=await hashPin(pin);unlocked=true;try{sessionStorage.setItem('hbt-unlocked','1')}catch(e){}}
+  persist();closeSheet();render();toast('Settings saved');
+}
+function removePin(){
+  state.settings.pin='';unlocked=false;try{sessionStorage.removeItem('hbt-unlocked')}catch(e){}
+  persist();closeSheet();render();toast('PIN removed');
+}
+function askReset(){
+  sheet={type:'reset'};
+  openSheet('Erase everything?','<p>Every bill, payment and setting will be deleted from the database. A backup file is downloaded first so you can restore it. Type <b>ERASE</b> to confirm.</p><label class="fld" style="margin-top:.7rem"><span>Confirmation</span><input type="text" id="eraseIn" autocomplete="off" data-first></label>','<div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn danger" data-act="reset-go">Erase everything</button></div>',true);
+}
+async function doReset(){
+  if((($('#eraseIn')||{}).value||'').trim()!=='ERASE')return formErr('Type ERASE in capital letters to confirm.');
+  saveFile('house-build-backup-before-erase-'+today()+'.json',JSON.stringify(state,null,2),'application/json');
+  var pin=state.settings.pin;
+  state=emptyState();state.settings.pin=pin;
+  persist();closeSheet();render();
+  var ok=await flush();
+  toast(ok?'Erased. Your backup was downloaded.':'Erased here, will sync when online');
+}
+async function restoreBackup(){
+  var msg=$('#backupMsg'),o;
+  try{
+    o=JSON.parse($('#backupTxt').value);
+    if(!o||typeof o!=='object'||!Array.isArray(o.bills)||!Array.isArray(o.labour))throw new Error('shape');
+  }catch(e){
+    msg.innerHTML='<div class="err" role="alert" style="margin-top:.6rem">That text isn’t a valid backup. Paste the full backup text, starting with a curly bracket.</div>';return;
+  }
+  var inc=normalize(o),nb=0,nl=0,upd=0;
+  var put=function(arr,x){var i=arr.findIndex(function(y){return y.id===x.id});if(i>=0){arr[i]=x;upd++;return 0}arr.push(x);return 1};
+  inc.bills.forEach(function(b){nb+=put(state.bills,b)});
+  inc.labour.forEach(function(e){nl+=put(state.labour,e)});
+  if((!state.settings.name||state.settings.name==='My House Build')&&inc.settings.name)state.settings.name=inc.settings.name;
+  if(!num(state.settings.budget)&&num(inc.settings.budget))state.settings.budget=num(inc.settings.budget);
+  if(!state.settings.pin&&inc.settings.pin){
+    var p=String(inc.settings.pin);
+    state.settings.pin=/^(h1:|p:)/.test(p)?p:await hashPin(p);
+    unlocked=true;try{sessionStorage.setItem('hbt-unlocked','1')}catch(e){}
+  }
+  persist();render();
+  msg.innerHTML='<p class="muted" style="margin-top:.6rem">Sending to the database…</p>';
+  var ok=await flush();
+  msg=$('#backupMsg');if(!msg)return;
+  msg.innerHTML=ok?'<div class="err" style="margin-top:.6rem;background:var(--ok-soft);color:var(--ok)" role="status">✅ Saved to the database: '+nb+' new bills, '+nl+' new labour payments, '+upd+' already there and refreshed.</div>'
+    :'<div class="err" role="alert" style="margin-top:.6rem">Imported on this device, but the database didn’t answer. It will sync automatically once the connection is back.</div>';
+}
+
+/* sample data */
+function loadSample(){
+  var d=function(n){return isoD(addDays(new Date(),-n))};
+  var it=function(cat,name,qty,unit,rate){return {id:uid(),cat:cat,name:name,qty:qty,unit:unit,rate:rate}};
+  var ln=function(g,role,count,rate,days,amount){return {id:uid(),gender:g,role:role,count:count,rate:rate||0,days:days||1,amount:amount||0}};
+  var n=Date.now();
+  state.bills=state.bills.concat([
+    {id:uid(),date:d(24),supplier:'Sri Lakshmi Traders',billNo:'1184',items:[it('cement','OPC 53 grade cement',60,'bag',415),it('steel','12 mm TMT bars',800,'kg',68)],vehicle:'tempo',transport:1200,loading:400,status:'paid',note:'',created:n-1},
+    {id:uid(),date:d(17),supplier:'Manjunath Sand Suppliers',billNo:'',items:[it('sand','M-sand load',3,'load',6500),it('aggregate','20 mm jelly',2,'load',7200)],vehicle:'tractor',transport:1500,loading:0,status:'paid',note:'Unloaded near the east gate',created:n-2},
+    {id:uid(),date:d(11),supplier:'Basava Bricks',billNo:'56',items:[it('brick','Red bricks',3000,'nos',9),it('brick','Solid blocks, 6 inch',200,'nos',48)],vehicle:'tempo',transport:1800,loading:600,status:'paid',note:'',created:n-3},
+    {id:uid(),date:d(6),supplier:'Shree Hardware and Electricals',billNo:'2209',items:[it('hardware','Binding wire',25,'kg',92),it('electrical','2.5 sq mm wire, 90 m coil',2,'nos',2450)],vehicle:'auto',transport:250,loading:0,status:'paid',note:'',created:n-4},
+    {id:uid(),date:d(2),supplier:'Sri Lakshmi Traders',billNo:'1201',items:[it('cement','OPC 53 grade cement',40,'bag',418)],vehicle:'auto',transport:350,loading:150,status:'due',note:'Pay on Saturday',created:n-5}
+  ]);
+  var ws=weekStart(new Date()),prev=addDays(ws,-7);
+  state.labour=state.labour.concat([
+    {id:uid(),date:d(22),payType:'daily',from:'',to:'',area:'Foundation',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000),ln('men','Helper (Kooli)',3,700),ln('women','Helper (Kooli)',3,600)],status:'paid',note:'',created:n-6},
+    {id:uid(),date:d(15),payType:'once',from:'',to:'',area:'Bar bending',contractor:'Basavaraj gang',lines:[ln('men','Bar bender',3,0,1,18000)],status:'paid',note:'Lump sum for the footing steel',created:n-7},
+    {id:uid(),date:isoD(addDays(prev,5)),payType:'weekly',from:isoD(prev),to:isoD(addDays(prev,5)),area:'Brick work',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000,6),ln('men','Helper (Kooli)',2,700,6),ln('women','Helper (Kooli)',4,600,6)],status:'paid',note:'',created:n-8},
+    {id:uid(),date:d(3),payType:'daily',from:'',to:'',area:'Plastering',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000),ln('women','Helper (Kooli)',2,600)],status:'due',note:'',created:n-9}
+  ]);
+  if(!num(state.settings.budget))state.settings.budget=1000000;
+  persist();closeSheet();render();toast('Sample data added');
+}
+
+/* export */
+function csvCell(v){
+  if(typeof v==='number')return String(v);
+  var s=String(v==null?'':v);
+  if(/^[=+\-@]/.test(s))s="'"+s;
+  return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function buildCSV(){
+  var rows=[['Section','Date','Supplier or work','Description','Group','Quantity','Unit or days','Rate','Amount','Status','Note']];
+  state.bills.forEach(function(b){
+    b.items.forEach(function(i){rows.push(['Material',b.date,b.supplier,i.name||catOf(i.cat).label,catOf(i.cat).label,num(i.qty),i.unit,num(i.rate),itemAmt(i),b.status,b.note])});
+    if(num(b.transport)>0)rows.push(['Transport',b.date,b.supplier,vehOf(b.vehicle).label+' charge','Transport','','','',num(b.transport),b.status,b.note]);
+    if(num(b.loading)>0)rows.push(['Transport',b.date,b.supplier,'Loading and unloading','Transport','','','',num(b.loading),b.status,b.note]);
+  });
+  state.labour.forEach(function(e){
+    e.lines.forEach(function(l){rows.push(['Labour ('+payOf(e.payType).label.toLowerCase()+')',e.date,e.area||e.contractor,l.role,genOf(l.gender).label,num(l.count),e.payType==='once'?'':num(l.days)||1,e.payType==='once'?'':num(l.rate),lineAmt(e,l),e.status,e.note])});
+  });
+  return '\ufeff'+rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n');
+}
+function doExport(){
+  saveFile('house-expenses-'+today()+'.csv',buildCSV(),'text/csv;charset=utf-8');
+  toast('CSV exported');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-act]');if(!el)return;
+  var act=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
+  switch(act){
+    case 'tab':ui.tab=v;render();window.scrollTo(0,0);break;
+    case 'mstatus':ui.mstatus=v;render();break;
+    case 'mcat':ui.mcat=v;render();break;
+    case 'lpay':ui.lpay=v;render();break;
+    case 'lstatus':ui.lstatus=v;render();break;
+    case 'clear-m':ui.mq='';ui.mstatus='all';ui.mcat='all';render();break;
+    case 'clear-l':ui.lq='';ui.lpay='all';ui.lstatus='all';render();break;
+    case 'add-bill':openBillSheet();break;
+    case 'edit-bill':openBillSheet(id);break;
+    case 'del-bill':confirmDelete('bill',id);break;
+    case 'toggle-bill':
+      if(isAdmin()){var b=state.bills.filter(function(x){return x.id===id})[0];if(b){b.status=b.status==='due'?'paid':'due';persist();render();toast(b.status==='due'?'Marked as due':'Marked as paid')}}
+      break;
+    case 'add-labour':openLabourSheet();break;
+    case 'edit-labour':openLabourSheet(id);break;
+    case 'del-labour':confirmDelete('labour',id);break;
+    case 'toggle-labour':
+      if(isAdmin()){var e2=state.labour.filter(function(x){return x.id===id})[0];if(e2){e2.status=e2.status==='due'?'paid':'due';persist();render();toast(e2.status==='due'?'Marked as due':'Marked as paid')}}
+      break;
+    case 'do-delete':
+      if(sheet&&sheet.type==='delete'&&isAdmin()){
+        var kind=sheet.kind,did=sheet.id;
+        if(kind==='bill')state.bills=state.bills.filter(function(x){return x.id!==did});else state.labour=state.labour.filter(function(x){return x.id!==did});
+        persist();closeSheet();render();toast(kind==='bill'?'Bill deleted':'Payment deleted');
+      }
+      break;
+    case 'close':closeSheet();break;
+    case 'set-status':if(draft){draft.status=v;$('#statusHost').innerHTML=statusSeg(v)}break;
+    case 'add-item':if(draft){draft.items.push(newItem());renderBillRows(true)}break;
+    case 'del-item':if(draft&&draft.items.length>1){draft.items.splice(+el.dataset.i,1);renderBillRows()}break;
+    case 'save-bill':saveBill();break;
+    case 'set-paytype':if(draft){draft.payType=v;applyPayType()}break;
+    case 'add-crew':
+      if(draft){var nl=newLine(el.dataset.g);var s=draft.payType==='once'?0:suggestRate(nl.role,nl.gender);if(s)nl.rate=String(s);draft.lines.push(nl);renderCrewRows(true)}
+      break;
+    case 'del-crew':if(draft&&draft.lines.length>1){draft.lines.splice(+el.dataset.i,1);renderCrewRows()}break;
+    case 'save-labour':saveLabour();break;
+    case 'settings':openSettings();break;
+    case 'save-settings':if(isAdmin())saveSettings();break;
+    case 'lock':unlocked=false;try{sessionStorage.removeItem('hbt-unlocked')}catch(e){}render();toast('Admin locked');break;
+    case 'unlock-sheet':openUnlock();break;
+    case 'unlock':doUnlock();break;
+    case 'export':doExport();break;
+    case 'copy-backup':
+      (function(){var ta=$('#backupTxt');ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}
+        $('#backupMsg').innerHTML='<p class="muted" style="margin-top:.5rem">'+(ok?'Backup copied.':'Select the text above and copy it manually.')+'</p>'})();
+      break;
+    case 'restore':if(isAdmin())restoreBackup();break;
+    case 'sample':if(isAdmin())loadSample();break;
+    case 'reset-ask':if(isAdmin())askReset();break;
+    case 'reset-go':if(isAdmin())doReset();break;
+    case 'remove-pin':if(isAdmin())removePin();break;
+    case 'download-backup':saveFile('house-build-backup-'+today()+'.json',JSON.stringify(state,null,2),'application/json');toast('Backup downloaded');break;
+    case 'seed-restore':if(isAdmin()){if(sheet&&sheet.type==='snapguard')closeSheet();restoreSeed()}break;
+    case 'seed-dismiss':try{localStorage.setItem(seedDismissKey,seedSig())}catch(e){}updateSeedBar();break;
+    case 'seed-ok':seedResult=null;updateSeedBar();break;
+    case 'snapshot-html':downloadSnapshotHtml(false);break;
+    case 'snapshot-force':closeSheet();downloadSnapshotHtml(true);break;
+    case 'sync-now':retryNow();break;
+    case 'retry-connect':retryNow();break;
+  }
+});
+
+document.addEventListener('input',function(ev){
+  var t=ev.target;
+  if(t.id==='mQ'){ui.mq=t.value;$('#matList').innerHTML=matListHTML();return}
+  if(t.id==='lQ'){ui.lq=t.value;$('#labList').innerHTML=labListHTML();return}
+  if(!sheet||!draft||!t.closest('.sheet'))return;
+  var r=t.dataset.r,k=t.dataset.k,row=t.closest('[data-i]');
+  if(sheet.type==='bill'){
+    if(r&&row){
+      var it=draft.items[+row.dataset.i];if(!it)return;
+      it[r]=t.value;
+      if(r==='cat'){var ph=row.querySelector('[data-r="name"]');if(ph)ph.placeholder=catOf(t.value).ph}
+      row.querySelector('output').textContent=money(itemAmt(it));
+      updateBillTotals();
+    }else if(k){draft[k]=t.value;if(k==='transport'||k==='loading')updateBillTotals()}
+  }else if(sheet.type==='labour'){
+    if(r&&row){
+      var l=draft.lines[+row.dataset.i];if(!l)return;
+      l[r]=t.value;
+      if((r==='role'||r==='gender')&&draft.payType!=='once'&&!num(l.rate)){
+        var s=suggestRate(l.role,l.gender);
+        if(s){l.rate=String(s);var ri=row.querySelector('[data-r="rate"]');if(ri)ri.value=s}
+      }
+      var out=row.querySelector('output');if(out)out.textContent=money(lineAmt(draft,l));
+      updateLabourTotals();
+    }else if(k)draft[k]=t.value;
+  }
+});
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'&&$('#backdrop'))closeSheet();
+  if(ev.key==='Enter'&&ev.target.id==='pinIn'){ev.preventDefault();doUnlock()}
+});
+
+/* ---------- snapshot inside this file: restore Turso from JSON, and write a new single-file copy ---------- */
+/* The block <script id="hbt-seed"> holds a JSON copy of the database. Restoring only ever ADDS records that
+   the database is missing (matched by id). It never deletes, and never overwrites a record that exists. */
+var seedDismissKey='hbt-seed-dismissed',seedBusy=false,seedResult=null;
+function readSeed(){
+  try{
+    var el=document.getElementById('hbt-seed');if(!el)return null;
+    var o=JSON.parse(el.textContent||'null');if(!o||typeof o!=='object')return null;
+    var n=normalize(o);
+    if(!n.bills.length&&!n.labour.length)return null;
+    return {data:n,exportedAt:o.exportedAt||null};
+  }catch(e){return null}
+}
+var SEED=readSeed();
+function seedSig(){return SEED?(SEED.exportedAt||'')+'|'+SEED.data.bills.length+'|'+SEED.data.labour.length:''}
+function seedDismissed(){try{return localStorage.getItem(seedDismissKey)===seedSig()}catch(e){return false}}
+function seedDate(){if(!SEED||!SEED.exportedAt)return '';var d=new Date(SEED.exportedAt);return isFinite(d)?fmtDate(isoD(d)):''}
+function seedMissing(){
+  var have={};
+  state.bills.forEach(function(b){have['bill:'+b.id]=1});
+  state.labour.forEach(function(e){have['labour:'+e.id]=1});
+  if(!SEED)return {bills:[],labour:[]};
+  return {
+    bills:SEED.data.bills.filter(function(b){return !have['bill:'+b.id]}),
+    labour:SEED.data.labour.filter(function(e){return !have['labour:'+e.id]})
+  };
+}
+function seedSettingsPatch(){
+  var p={};if(!SEED)return p;
+  var s=SEED.data.settings,c=state.settings;
+  if((!c.name||c.name==='My House Build')&&s.name&&s.name!=='My House Build')p.name=s.name;
+  if(!num(c.budget)&&num(s.budget))p.budget=num(s.budget);
+  if(!c.pin&&s.pin)p.pin=String(s.pin);
+  return p;
+}
+function seedPendingCount(){var m=seedMissing();return m.bills.length+m.labour.length+Object.keys(seedSettingsPatch()).length}
+function updateSeedBar(){
+  var bar=$('#seedBar');if(!bar)return;
+  if(seedResult){
+    bar.hidden=false;
+    bar.innerHTML='<div class="box'+(seedResult.kind?' '+seedResult.kind:'')+'" role="status"><p>'+seedResult.html+'</p>'+(seedBusy?'':'<div class="add-row"><button class="btn soft small" data-act="seed-ok">OK</button></div>')+'</div>';
+    return;
+  }
+  if(!SEED||!booted||!connected||!baseKnown||!isAdmin()||seedDismissed()){bar.hidden=true;bar.innerHTML='';return}
+  var m=seedMissing(),n=m.bills.length+m.labour.length,extra=Object.keys(seedSettingsPatch()).length;
+  if(!n&&!extra){bar.hidden=true;bar.innerHTML='';return}
+  var what=[];
+  if(m.bills.length)what.push(m.bills.length+(m.bills.length===1?' bill':' bills'));
+  if(m.labour.length)what.push(m.labour.length+(m.labour.length===1?' labour payment':' labour payments'));
+  if(extra)what.push('some settings');
+  bar.hidden=false;
+  bar.innerHTML='<div class="box"><p>📦 This file carries a saved copy of your data'+(seedDate()?' from '+esc(seedDate()):'')+'. The database is missing <b>'+esc(what.join(', '))+'</b>. Restoring only adds what is missing; nothing is deleted or overwritten.</p>'+
+    '<div class="add-row"><button class="btn primary small" data-act="seed-restore">Restore to Turso</button><button class="btn ghost small" data-act="seed-dismiss">Not now</button></div></div>';
+}
+function seedNote(html,kind){
+  seedResult={html:html,kind:kind||''};
+  updateSeedBar();
+  var m=$('#seedMsg');
+  if(m)m.innerHTML='<div class="err" role="status" style="margin-top:.6rem;'+(kind==='ok'?'background:var(--ok-soft);color:var(--ok)':'')+'">'+html+'</div>';
+}
+async function restoreSeed(){
+  if(!isAdmin()||!SEED||seedBusy)return;
+  seedBusy=true;
+  try{
+    seedNote('⏳ Checking what the database already has…');
+    await syncFromRemote();
+    if(!connected){seedNote('⚠️ Can’t reach the database, so nothing was changed. Try again when you are online.','bad');return}
+    var m=seedMissing(),sp=seedSettingsPatch(),pinVal=null;
+    if(sp.pin)pinVal=/^(h1:|p:)/.test(sp.pin)?sp.pin:await hashPin(sp.pin);
+    var keys=[];
+    /* everything below is synchronous, so no edit can slip in half way */
+    m=seedMissing();
+    m.bills.forEach(function(b){state.bills.push(clone(b));keys.push('bill:'+b.id)});
+    m.labour.forEach(function(e){state.labour.push(clone(e));keys.push('labour:'+e.id)});
+    var sk=Object.keys(sp);
+    if(sp.name)state.settings.name=sp.name;
+    if(sp.budget)state.settings.budget=sp.budget;
+    if(pinVal){state.settings.pin=pinVal;unlocked=true;try{sessionStorage.setItem('hbt-unlocked','1')}catch(e){}}
+    if(!keys.length&&!sk.length){seedNote('✅ Nothing to restore. Everything in this file is already in the database.','ok');return}
+    persist();
+    seedNote('⏳ Sending '+keys.length+' record'+(keys.length===1?'':'s')+' to Turso…');
+    var ok=await flush();
+    if(!ok){seedNote('⚠️ Restored on this device, but the database did not answer. It will sync by itself once the connection is back, so nothing is lost.','bad');return}
+    /* read it back from Turso and compare, so “saved” means saved */
+    var remote=await fetchRemote(),rm=snapshotMap(remote),cur=snapshotMap(state),bad=0;
+    keys.forEach(function(k){if(rm[k]!==cur[k])bad++});
+    if(bad)seedNote('⚠️ '+bad+' of '+keys.length+' records did not read back from Turso. Nothing was removed; press Restore again.','bad');
+    else seedNote('✅ Restored '+m.bills.length+' bills and '+m.labour.length+' labour payments'+(sk.length?' plus settings':'')+'. Read back from Turso and verified.','ok');
+  }catch(e){
+    seedNote('⚠️ Something went wrong: '+esc(e&&e.message?e.message:'unknown error')+'. Nothing was deleted.','bad');
+  }finally{seedBusy=false;render()}
+}
+function snapshotSecHTML(){
+  var s='<div class="settings-sec"><h4>📦 Single-file snapshot</h4>';
+  if(SEED){
+    var mm=seedMissing(),rec=mm.bills.length+mm.labour.length,ex=Object.keys(seedSettingsPatch()).length,n=rec+ex;
+    var gap=(rec?rec+(rec===1?' record':' records'):'')+(rec&&ex?' and ':'')+(ex?'some settings':'');
+    s+='<p class="muted">The data saved inside this file ('+SEED.data.bills.length+' bills, '+SEED.data.labour.length+' labour payments'+(seedDate()?', taken '+esc(seedDate()):'')+') '+(n?'has <b>'+esc(gap)+'</b> the database doesn’t have yet.':'is already fully in the database.')+' Restoring only adds what is missing. It never deletes or overwrites.</p>'+
+      '<div class="add-row"><button class="btn soft" data-act="seed-restore"'+(n?'':' disabled')+'>Restore missing records to Turso</button></div>';
+  }else s+='<p class="muted">This file has no data saved inside it yet.</p>';
+  s+='<div id="seedMsg"></div><p class="muted" style="margin:.8rem 0 .5rem">Download a copy of this whole portal with the database’s current contents built in as JSON. Keep it as your backup: opening it anywhere reconnects to Turso and offers to restore whatever is missing.</p>'+
+    '<button class="btn primary" data-act="snapshot-html">Download portal + data (.html)</button></div>';
+  return s;
+}
+function buildPortalSource(snap){
+  var root=document.documentElement.cloneNode(true);
+  var q=function(s){return root.querySelector(s)};
+  var bd=q('#backdrop');if(bd)bd.remove();
+  q('#view').innerHTML='';q('#tabs').innerHTML='';
+  var tt=q('#toast');tt.innerHTML='';tt.setAttribute('class','toast');
+  var sb=q('#seedBar');sb.innerHTML='';sb.setAttribute('hidden','');
+  q('#projName').textContent='My House Build';
+  q('#syncChip').textContent='⏳ Connecting…';
+  q('#roleChip').textContent='🛠️ Admin mode';
+  var lb=q('#lockBtn');lb.textContent='';lb.setAttribute('hidden','');lb.setAttribute('data-act','lock');
+  q('body').removeAttribute('class');
+  q('title').textContent='House Build Tracker';
+  q('#hbt-seed').textContent=JSON.stringify(snap).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+  return '<!DOCTYPE html>\n'+root.outerHTML;
+}
+async function downloadSnapshotHtml(force){
+  if(!isAdmin())return;
+  toast('Reading the database…');
+  await syncFromRemote();
+  if(!force&&SEED){
+    var m=seedMissing(),n=m.bills.length+m.labour.length;
+    if(n){
+      sheet={type:'snapguard'};
+      openSheet('Some saved records aren’t in the database','<p>The snapshot inside this file has <b>'+n+'</b> record'+(n===1?'':'s')+' that the database doesn’t have. A new download reflects the database as it is now, so they would not be in the new file.</p><p class="muted" style="margin-top:.6rem">Restore them first if you want to keep them.</p>','<div class="foot-btns"><button class="btn ghost" data-act="snapshot-force">Download anyway</button><button class="btn primary" data-act="seed-restore" data-first>Restore them first</button></div>',true);
+      return;
+    }
+  }
+  var snap=Object.assign({format:'house-build-tracker-snapshot',version:1,exportedAt:new Date().toISOString(),source:connected?'turso':'device-copy'},clone(state));
+  saveFile('house-build-portal-'+today()+'.html',buildPortalSource(snap),'text/html;charset=utf-8');
+  toast(connected?'Downloaded: '+state.bills.length+' bills, '+state.labour.length+' labour payments':'Offline: the file holds this device’s copy');
+}
+
+/* ---------- start ---------- */
+document.body.classList.add('intro');
+setTimeout(function(){document.body.classList.remove('intro')},3200);
+boot();
+setInterval(pollOnce,45000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)pollOnce()});
+window.addEventListener('online',pollOnce);
+})();
+</script>
+</body>
+</html>
