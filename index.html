@@ -3,8 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow">
-<meta name="referrer" content="no-referrer">
 <title>House Build Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -176,8 +174,11 @@ input::placeholder,textarea::placeholder{color:var(--ink-2);opacity:.75}
 .status{display:inline-flex;align-items:center;gap:.3rem;min-height:36px;padding:.15rem .8rem;border-radius:999px;border:0;font-weight:700;font-size:.9rem}
 .status.paid{background:var(--ok-soft);color:var(--ok)}
 .status.due{background:var(--due-soft);color:var(--due)}
+.status.partial{background:var(--auto-soft);color:var(--auto-ink)}
+.r-pay{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;background:var(--due-soft);color:var(--due);border-radius:8px;padding:.4rem .65rem;margin-bottom:.5rem;font-size:.92rem}
+.balline{margin:.4rem 0 0;font-size:1rem}
 .status:disabled{cursor:default}
-.stat-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem;margin-bottom:1rem}
+.stat-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.8rem;margin-bottom:1rem}
 .stat-strip .tile{border-left-width:1px;grid-template-columns:auto 1fr}
 .stat-strip .tile b{font-size:1.25rem}
 .stat-strip small{grid-column:2;color:var(--ink-2);font-size:.85rem}
@@ -204,6 +205,7 @@ fieldset.block.auto{background:var(--auto-soft);border-color:var(--auto)}
 .crew-row.daily{grid-template-columns:130px minmax(0,1fr) 90px 110px 112px 36px}
 .crew-row.weekly{grid-template-columns:130px minmax(0,1fr) 84px 104px 76px 110px 36px}
 .crew-row.once{grid-template-columns:130px minmax(0,1fr) 90px 140px 36px}
+.extra-row{grid-template-columns:190px minmax(0,1fr) 130px 36px}
 .cell{display:flex;flex-direction:column;gap:.25rem;min-width:0}
 .cell output{min-height:44px;display:flex;align-items:center;font:700 1.05rem var(--display);font-variant-numeric:tabular-nums}
 .add-row{display:flex;gap:.5rem;flex-wrap:wrap}
@@ -244,6 +246,9 @@ fieldset.block.auto{background:var(--auto-soft);border-color:var(--auto)}
   .crew-row.once .c-n{grid-column:span 2}
   .crew-row.once .c-amt{grid-column:span 4}
   .crew-row.once .c-x{grid-column:span 6}
+  .extra-row{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .c-et,.c-ed{grid-column:span 6}
+  .c-ea{grid-column:span 5}
 }
 @media (max-width:520px){
   .paytype small{display:none}
@@ -256,14 +261,6 @@ fieldset.block.auto{background:var(--auto-soft);border-color:var(--auto)}
   .intro .brick.on{animation:none}
   .toast{transition:none}
 }
-
-/* snapshot restore bar */
-.seedbar{max-width:1120px;margin:1rem auto 0;padding:0 1rem}
-.seedbar .box{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;background:var(--due-soft);color:var(--ink);border:1.5px solid var(--auto);border-radius:14px;padding:.8rem 1rem}
-.seedbar .box p{flex:1 1 260px;font-size:.95rem}
-.seedbar .box .add-row{margin-left:auto}
-.seedbar .box.ok{background:var(--ok-soft);border-color:var(--ok)}
-.seedbar .box.bad{background:var(--brick-soft);border-color:var(--brick)}
 </style>
 </head>
 <body>
@@ -288,11 +285,9 @@ fieldset.block.auto{background:var(--auto-soft);border-color:var(--auto)}
 <nav class="tabs" aria-label="Sections">
   <div class="tabs-in" role="tablist" id="tabs"></div>
 </nav>
-<div class="seedbar" id="seedBar" hidden></div>
 <main id="view"></main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script type="application/json" id="hbt-seed">{"format":"house-build-tracker-snapshot","version":1,"exportedAt":null,"source":"empty","settings":{},"bills":[],"labour":[]}</script>
 <script>
 (function(){
 'use strict';
@@ -330,11 +325,22 @@ var PAY={
 };
 var GENDER={men:{label:'Men',one:'man',emoji:'👷‍♂️'},women:{label:'Women',one:'woman',emoji:'👷‍♀️'}};
 var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var EXTRAS=[
+  {id:'food',label:'Food and meals',emoji:'🍛'},
+  {id:'tea',label:'Tea and snacks',emoji:'☕'},
+  {id:'water',label:'Drinking water',emoji:'💧'},
+  {id:'travel',label:'Travel or bus fare',emoji:'🚌'},
+  {id:'stay',label:'Stay or lodging',emoji:'🛏️'},
+  {id:'tools',label:'Tools or equipment rent',emoji:'🧰'},
+  {id:'other',label:'Other',emoji:'📦'}
+];
+var PAYMODES=[['full','✅','Paid in full','Nothing left to pay'],['partial','🟡','Partly paid','Some balance remains'],['none','⏳','Not paid','Full amount is due']];
 
 var catOf=function(id){return CATS.filter(function(c){return c.id===id})[0]||CATS[CATS.length-1]};
 var vehOf=function(id){return VEHICLES.filter(function(c){return c.id===id})[0]||VEHICLES[0]};
 var payOf=function(id){return PAY[id]||PAY.daily};
 var genOf=function(id){return GENDER[id]||GENDER.men};
+var extOf=function(id){return EXTRAS.filter(function(c){return c.id===id})[0]||EXTRAS[EXTRAS.length-1]};
 
 /* ---------- helpers ---------- */
 var $=function(s,r){return (r||document).querySelector(s)};
@@ -370,7 +376,16 @@ var lineAmt=function(e,l){
   if(e.payType==='once')return num(l.amount);
   return num(l.count)*num(l.rate)*(e.payType==='weekly'?num(l.days):1);
 };
-var labourTotal=function(e){return e.lines.reduce(function(s,l){return s+lineAmt(e,l)},0)};
+var linesTotal=function(e){return e.lines.reduce(function(s,l){return s+lineAmt(e,l)},0)};
+var extrasTotal=function(e){return (e.extras||[]).reduce(function(s,x){return s+num(x.amount)},0)};
+var labourTotal=function(e){return linesTotal(e)+extrasTotal(e)};
+var recTotal=function(kind,x){return kind==='bill'?billTotal(x):labourTotal(x)};
+/* payments: paid amount decides the status. paid = 0 is Due, 0 < paid < total is Partial, paid >= total is Paid */
+var payState=function(paid,total){paid=num(paid);total=num(total);if(paid<=0.004&&total>0)return 'due';if(paid>=total-0.004)return 'paid';return 'partial'};
+var paidOf=function(x,total){var p=(x.paid===undefined||x.paid===null||x.paid==='')?(x.status==='due'?0:total):num(x.paid);return Math.max(0,Math.min(p,total))};
+var balOf=function(x,total){return Math.max(0,Math.round((total-paidOf(x,total))*100)/100)};
+var stampBill=function(b){var t=billTotal(b);b.paid=paidOf(b,t);b.status=payState(b.paid,t);return b};
+var stampLabour=function(e){var t=labourTotal(e);e.paid=paidOf(e,t);e.status=payState(e.paid,t);return e};
 var personDays=function(e,l){return e.payType==='once'?0:num(l.count)*(e.payType==='weekly'?num(l.days):1)};
 var heads=function(e){return e.lines.reduce(function(s,l){return s+num(l.count)},0)};
 
@@ -379,9 +394,9 @@ var heads=function(e){return e.lines.reduce(function(s,l){return s+num(l.count)}
    and change this database. Keep the repo private, rotate the token if it ever leaks, and
    consider a read-only token for anyone who only needs to view. */
 var CONFIG={
-  url:'https://tmm-house-jagadishdb.aws-ap-south-1.turso.io',
+  url:'libsql://tmm-house-jagadishdb.aws-ap-south-1.turso.io',
   token:'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTAwMDQwMzksImlkIjoiMDFhMGM0OGQtNzgwMS03ZTExLWEwYWUtOWRjNDBmNTYyMTc4Iiwia2lkIjoiTWRmMkFHYlo4SDU2RzVIT3ZvNVA5X1RlVmg1eEhIZEN6SXNTdzE1UmRZMCIsInJpZCI6IjgyOTI2NjRiLTE3MGItNGVjYy1hM2MwLTVkYzEzYWFmNTVjYiJ9.Zl7PobpgNS4-v3KmMwyFztf49_ryewB6vmtECY7Km3dPO5uOnDTCk5gYcYQOsWwkC0m9iQf2Fikf9pAX8IRoCw'
-};       
+};
 var DB_URL=CONFIG.url.replace(/^libsql:\/\//,'https://').replace(/\/+$/,'');
 var CACHE_KEY='hbt-cache-v2';
 
@@ -391,10 +406,10 @@ function normalize(s){
   if(!s||typeof s!=='object')return b;
   b.settings=Object.assign(b.settings,s.settings&&typeof s.settings==='object'?s.settings:{});
   b.bills=(Array.isArray(s.bills)?s.bills:[]).filter(Boolean).map(function(x){
-    return Object.assign({id:uid(),date:'',supplier:'',billNo:'',vehicle:'none',transport:0,loading:0,status:'paid',note:''},x,{items:Array.isArray(x.items)?x.items.filter(Boolean):[]});
+    return stampBill(Object.assign({id:uid(),date:'',supplier:'',billNo:'',vehicle:'none',transport:0,loading:0,status:'paid',note:''},x,{items:Array.isArray(x.items)?x.items.filter(Boolean):[]}));
   });
   b.labour=(Array.isArray(s.labour)?s.labour:[]).filter(Boolean).map(function(x){
-    return Object.assign({id:uid(),date:'',payType:'daily',from:'',to:'',area:'',contractor:'',status:'paid',note:''},x,{lines:Array.isArray(x.lines)?x.lines.filter(Boolean):[]});
+    return stampLabour(Object.assign({id:uid(),date:'',payType:'daily',from:'',to:'',area:'',contractor:'',status:'paid',note:''},x,{lines:Array.isArray(x.lines)?x.lines.filter(Boolean):[],extras:Array.isArray(x.extras)?x.extras.filter(Boolean):[]}));
   });
   b.updatedAt=num(s.updatedAt);
   return b;
@@ -464,14 +479,55 @@ async function tursoRun(stmts){
   }
   return out;
 }
+/* payment columns kept beside the JSON copy, so the database can be queried and reported on directly */
+var NEWCOLS=[['rec_date','TEXT'],['party','TEXT'],['total_amount','REAL'],['paid_amount','REAL'],['balance_amount','REAL'],['pay_status','TEXT'],['extras_amount','REAL']];
+var needBackfill=false;
+var F=function(n){return {type:'float',value:num(n)}};
 async function ensureSchema(){
   var r=await tursoRun([
     {sql:'CREATE TABLE IF NOT EXISTS hb_records (id TEXT PRIMARY KEY, kind TEXT NOT NULL, data TEXT NOT NULL, updated_at INTEGER NOT NULL)'},
     {sql:'CREATE TABLE IF NOT EXISTS hb_settings (k TEXT PRIMARY KEY, v TEXT NOT NULL)'},
-    {sql:'CREATE INDEX IF NOT EXISTS hb_records_kind ON hb_records(kind)'}
+    {sql:'CREATE INDEX IF NOT EXISTS hb_records_kind ON hb_records(kind)'},
+    {sql:'PRAGMA table_info(hb_records)'}
   ]);
   r.forEach(function(x){if(!x.ok)throw new Error(x.error)});
+  var have={};r[3].rows.forEach(function(row){have[row[1]]=1});
+  var alters=NEWCOLS.filter(function(c){return !have[c[0]]}).map(function(c){return {sql:'ALTER TABLE hb_records ADD COLUMN '+c[0]+' '+c[1]}});
+  if(alters.length){
+    var a=await tursoRun(alters);
+    a.forEach(function(x){if(!x.ok&&!/duplicate column/i.test(x.error||''))throw new Error(x.error)});
+  }
+  var r2=await tursoRun([
+    {sql:'CREATE INDEX IF NOT EXISTS hb_records_pay ON hb_records(kind, pay_status)'},
+    {sql:'SELECT COUNT(*) FROM hb_records WHERE pay_status IS NULL'}
+  ]);
+  r2.forEach(function(x){if(!x.ok)throw new Error(x.error)});
+  needBackfill=num(r2[1].rows[0]&&r2[1].rows[0][0])>0;
   schemaReady=true;
+}
+function recCols(kind,json){
+  var o;try{o=typeof json==='string'?JSON.parse(json):json}catch(e){o=null}
+  if(!o||typeof o!=='object')return null;
+  var x=kind==='bill'?stampBill(Object.assign({items:[]},o)):stampLabour(Object.assign({lines:[]},o));
+  var t=recTotal(kind,x);
+  return {date:x.date||'',party:kind==='bill'?(x.supplier||''):(x.area||x.contractor||''),total:t,paid:x.paid,bal:balOf(x,t),status:x.status,extras:kind==='labour'?extrasTotal(x):0};
+}
+function colArgs(c){
+  if(!c){var n={type:'null'};return [n,n,n,n,n,n,n]}
+  return [T(c.date),T(c.party),F(c.total),F(c.paid),F(c.bal),T(c.status),F(c.extras)];
+}
+/* fills the new columns for records saved before they existed (data itself is not touched) */
+async function backfillCols(remote){
+  var recs=[],allOk=true;
+  remote.bills.forEach(function(b){recs.push(['bill',b])});
+  remote.labour.forEach(function(e){recs.push(['labour',e])});
+  for(var i=0;i<recs.length;i+=40){
+    var res=await tursoRun(recs.slice(i,i+40).map(function(r){
+      return {sql:'UPDATE hb_records SET rec_date = ?, party = ?, total_amount = ?, paid_amount = ?, balance_amount = ?, pay_status = ?, extras_amount = ? WHERE id = ?',args:colArgs(recCols(r[0],r[1])).concat([T(r[1].id)])};
+    }));
+    res.forEach(function(x){if(!x.ok)allOk=false});
+  }
+  if(allOk)needBackfill=false;
 }
 async function fetchRemote(){
   var r=await tursoRun([{sql:'SELECT id, kind, data FROM hb_records'},{sql:'SELECT k, v FROM hb_settings'}]);
@@ -507,6 +563,7 @@ async function syncFromRemote(){
   try{
     if(!schemaReady)await ensureSchema();
     var remote=await fetchRemote();
+    if(needBackfill){try{await backfillCols(remote)}catch(e){}}
     /* no awaits below this line, so an edit can't slip in between reading and replacing state */
     var pending=diffOps(snapshotMap(state),base);
     var next=remote;
@@ -526,7 +583,7 @@ function opToStmt(op){
   var p=op.k.indexOf(':'),kind=op.k.slice(0,p),id=op.k.slice(p+1);
   if(kind==='set')return {sql:'INSERT INTO hb_settings (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v',args:[T(id),T(op.v)]};
   if(op.del)return {sql:'DELETE FROM hb_records WHERE id = ?',args:[T(id)]};
-  return {sql:'INSERT INTO hb_records (id, kind, data, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET kind = excluded.kind, data = excluded.data, updated_at = excluded.updated_at',args:[T(id),T(kind),T(op.v),I(Date.now())]};
+  return {sql:'INSERT INTO hb_records (id, kind, data, updated_at, rec_date, party, total_amount, paid_amount, balance_amount, pay_status, extras_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET kind = excluded.kind, data = excluded.data, updated_at = excluded.updated_at, rec_date = excluded.rec_date, party = excluded.party, total_amount = excluded.total_amount, paid_amount = excluded.paid_amount, balance_amount = excluded.balance_amount, pay_status = excluded.pay_status, extras_amount = excluded.extras_amount',args:[T(id),T(kind),T(op.v),I(Date.now())].concat(colArgs(recCols(kind,op.v)))};
 }
 function flush(){
   if(!baseKnown)return Promise.resolve(false);
@@ -637,11 +694,11 @@ var sheet=null,draft=null,lastFocus=null,lastCat='cement';
 
 /* ---------- derived numbers ---------- */
 function totals(){
-  var t={mat:0,trans:0,lab:0,due:0,men:0,women:0,menDays:0,womenDays:0};
+  var t={mat:0,trans:0,lab:0,due:0,paid:0,men:0,women:0,extra:0,menDays:0,womenDays:0};
   state.bills.forEach(function(b){
-    var i=billItems(b),tr=billTransport(b);
+    var i=billItems(b),tr=billTransport(b),tot=i+tr;
     t.mat+=i;t.trans+=tr;
-    if(b.status==='due')t.due+=i+tr;
+    t.paid+=paidOf(b,tot);t.due+=balOf(b,tot);
   });
   state.labour.forEach(function(e){
     var s=0;
@@ -650,8 +707,9 @@ function totals(){
       if(l.gender==='women'){t.women+=a;t.womenDays+=personDays(e,l)}
       else{t.men+=a;t.menDays+=personDays(e,l)}
     });
+    var xt=extrasTotal(e);t.extra+=xt;s+=xt;
     t.lab+=s;
-    if(e.status==='due')t.due+=s;
+    t.paid+=paidOf(e,s);t.due+=balOf(e,s);
   });
   t.total=t.mat+t.trans+t.lab;
   return t;
@@ -681,7 +739,6 @@ function bootHTML(){
 function render(){
   renderShell();
   updateSyncChip();
-  updateSeedBar();
   var v=$('#view');
   if(!baseKnown){v.innerHTML=bootHTML();return}
   v.innerHTML=ui.tab==='materials'?materialsHTML():ui.tab==='labour'?labourHTML():overviewHTML();
@@ -710,6 +767,8 @@ function breakdownHTML(t){
   if(t.trans>0)rows.push({e:'🛺',l:'Transport and loading',a:t.trans,k:'t'});
   if(t.men>0)rows.push({e:'👷‍♂️',l:'Labour, men',a:t.men,k:'l'});
   if(t.women>0)rows.push({e:'👷‍♀️',l:'Labour, women',a:t.women,k:'l'});
+  var xm={};state.labour.forEach(function(e){(e.extras||[]).forEach(function(x){var k=extOf(x.type).id;xm[k]=(xm[k]||0)+num(x.amount)})});
+  EXTRAS.forEach(function(x){if(xm[x.id]>0)rows.push({e:x.emoji,l:'Labour: '+x.label.toLowerCase(),a:xm[x.id],k:'l'})});
   if(!rows.length)return '<p class="muted">Add a bill or a labour payment to see the split.</p>';
   rows.sort(function(a,b){return b.a-a.a});
   var max=rows[0].a,total=t.total||1;
@@ -774,7 +833,8 @@ function overviewHTML(){
     stat+='<p class="muted">No budget set yet.</p>'+(admin?'<p><button class="btn soft small" data-act="settings">Set a budget to fill the wall</button></p>':'');
   }
   stat+='</div>';
-  if(t.due>0)stat+='<div class="due-chip">⏳ '+money(t.due)+' yet to pay</div>';
+  stat+='<div class="stat-lines" style="margin-top:.6rem"><p>Paid so far <b>'+money(t.paid)+'</b></p></div>';
+  if(t.due>0)stat+='<div class="due-chip">⏳ '+money(t.due)+' balance due</div>';
   var tile=function(k,e,label,amt){
     return '<div class="tile '+k+'"><span class="tile-emoji" aria-hidden="true">'+e+'</span><b>'+money(amt)+'</b><span class="lbl">'+label+(t.total>0?', '+Math.round(amt/t.total*100)+'%':'')+'</span></div>';
   };
@@ -787,8 +847,13 @@ function overviewHTML(){
 /* ---------- shared card bits ---------- */
 function zigHTML(){return '<svg class="zig" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 240 8"><defs><pattern id="zg" width="12" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H12L6 8Z" fill="currentColor"/></pattern></defs><rect width="240" height="8" fill="url(#zg)"/></svg>'}
 function statusBtn(kind,item,admin){
-  var due=item.status==='due';
-  return '<button class="status '+(due?'due':'paid')+'" '+(admin?'data-act="toggle-'+kind+'" data-id="'+esc(item.id)+'" title="Tap to mark as '+(due?'paid':'due')+'"':'disabled')+'>'+(due?'⏳ Due':'✅ Paid')+'</button>';
+  var tot=recTotal(kind,item),st=payState(paidOf(item,tot),tot),lbl=st==='paid'?'✅ Paid in full':st==='partial'?'🟡 Partly paid':'⏳ Not paid';
+  return '<button class="status '+st+'" '+(admin?'data-act="pay-'+kind+'" data-id="'+esc(item.id)+'" title="Tap to update the payment"':'disabled')+'>'+lbl+'</button>';
+}
+function payLinesHTML(kind,item){
+  var tot=recTotal(kind,item),p=paidOf(item,tot),b=balOf(item,tot);
+  if(b<=0)return '';
+  return '<div class="r-pay"><span>Paid '+money(p)+'</span><b>Balance due '+money(b)+'</b></div>';
 }
 function actionsHTML(kind,id,admin){
   if(!admin)return '';
@@ -817,7 +882,7 @@ function billCard(b,admin){
   if(num(b.transport)>0)items+='<li class="r-item charge"><span class="r-emoji" aria-hidden="true">'+veh.emoji+'</span><span class="r-name">'+esc(veh.id==='none'?'Transport':veh.label+' charge')+'</span><span class="r-amt">'+money(b.transport)+'</span></li>';
   if(num(b.loading)>0)items+='<li class="r-item charge"><span class="r-emoji" aria-hidden="true">🏋️</span><span class="r-name">Loading and unloading</span><span class="r-amt">'+money(b.loading)+'</span></li>';
   return '<article class="receipt mat"><div class="r-head"><div><h4>'+esc(b.supplier||'Material bill')+'</h4><small>'+esc(fmtDate(b.date))+(b.billNo?', bill '+esc(b.billNo):'')+'</small></div></div>'+
-    '<ul class="r-list">'+items+'</ul><div class="r-total"><span>Total</span><span>'+money(billTotal(b))+'</span></div>'+
+    '<ul class="r-list">'+items+'</ul><div class="r-total"><span>Total</span><span>'+money(billTotal(b))+'</span></div>'+payLinesHTML('bill',b)+
     (b.note?'<p class="r-note">'+esc(b.note)+'</p>':'')+
     '<div class="r-foot">'+statusBtn('bill',b,admin)+actionsHTML('bill',b.id,admin)+'</div>'+zigHTML()+'</article>';
 }
@@ -829,12 +894,12 @@ function matListHTML(){
 }
 function materialsHTML(){
   var admin=isAdmin(),total=0,due=0;
-  state.bills.forEach(function(b){var x=billTotal(b);total+=x;if(b.status==='due')due+=x});
+  state.bills.forEach(function(b){var x=billTotal(b);total+=x;due+=balOf(b,x)});
   var present={};state.bills.forEach(function(b){b.items.forEach(function(i){present[catOf(i.cat).id]=1})});
   var catChips=[['all','All categories']].concat(CATS.filter(function(c){return present[c.id]}).map(function(c){return [c.id,c.emoji+' '+esc(c.label)]}));
   return '<div class="page-head"><div><h2>🧱 Material bills</h2><p class="muted">'+state.bills.length+(state.bills.length===1?' bill, ':' bills, ')+money(total)+' in total'+(due>0?', '+money(due)+' due':'')+'</p></div>'+(admin?'<button class="btn primary" data-act="add-bill">+ Add bill</button>':'')+'</div>'+
     '<div class="toolbar"><input id="mQ" class="search" type="search" placeholder="Search supplier, item or bill number" aria-label="Search bills" value="'+esc(ui.mq)+'"></div>'+
-    '<div class="chips" aria-label="Filter by payment status">'+chipRow([['all','All'],['paid','✅ Paid'],['due','⏳ Due']],ui.mstatus,'mstatus')+'</div>'+
+    '<div class="chips" aria-label="Filter by payment status">'+chipRow([['all','All'],['paid','✅ Paid'],['partial','🟡 Partial'],['due','⏳ Not paid']],ui.mstatus,'mstatus')+'</div>'+
     (catChips.length>2?'<div class="chips" aria-label="Filter by category">'+chipRow(catChips,ui.mcat,'mcat')+'</div>':'')+
     '<div class="cards list-gap" id="matList">'+matListHTML()+'</div>';
 }
@@ -856,10 +921,11 @@ function labourCard(e,admin){
     var calc=e.payType==='once'?'fixed amount':e.payType==='weekly'?n+' × '+money(l.rate)+' × '+num(l.days)+(num(l.days)===1?' day':' days'):n+' × '+money(l.rate)+' per day';
     return '<li class="r-item"><span class="r-emoji" aria-hidden="true">'+g.emoji+'</span><span class="r-name">'+esc(l.role||'Worker')+'<small>'+esc(who)+', '+esc(calc)+'</small></span><span class="r-amt">'+money(lineAmt(e,l))+'</span></li>';
   }).join('');
+  (e.extras||[]).forEach(function(x){var t=extOf(x.type);lines+='<li class="r-item charge"><span class="r-emoji" aria-hidden="true">'+t.emoji+'</span><span class="r-name">'+esc(t.label)+(x.desc?'<small>'+esc(x.desc)+'</small>':'')+'</span><span class="r-amt">'+money(x.amount)+'</span></li>'});
   var when=e.payType==='weekly'&&parseD(e.from)&&parseD(e.to)?fmtDate(e.from)+' to '+fmtDate(e.to):fmtDate(e.date);
   var sub=e.payType==='weekly'?'Paid '+fmtDate(e.date):(e.payType==='once'&&e.contractor?'Contractor: '+e.contractor:'');
   return '<article class="receipt lab"><div class="r-head"><div><h4>'+esc(e.area||e.contractor||'Labour payment')+'</h4><small>'+esc(when)+'</small>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div><span class="badge">'+pay.emoji+' '+pay.label+'</span></div>'+
-    '<ul class="r-list">'+lines+'</ul><div class="r-total"><span>'+heads(e)+' workers</span><span>'+money(labourTotal(e))+'</span></div>'+
+    '<ul class="r-list">'+lines+'</ul><div class="r-total"><span>'+(heads(e)?heads(e)+' workers':'Total')+'</span><span>'+money(labourTotal(e))+'</span></div>'+payLinesHTML('labour',e)+
     (e.note?'<p class="r-note">'+esc(e.note)+'</p>':'')+
     '<div class="r-foot">'+statusBtn('labour',e,admin)+actionsHTML('labour',e.id,admin)+'</div>'+zigHTML()+'</article>';
 }
@@ -872,17 +938,18 @@ function labListHTML(){
 function labourHTML(){
   var admin=isAdmin(),t=totals();
   var ws=isoD(weekStart(new Date())),we=isoD(addDays(weekStart(new Date()),6)),week=0,due=0;
-  state.labour.forEach(function(e){var x=labourTotal(e);if(e.date>=ws&&e.date<=we)week+=x;if(e.status==='due')due+=x});
+  state.labour.forEach(function(e){var x=labourTotal(e);if(e.date>=ws&&e.date<=we)week+=x;due+=balOf(e,x)});
   var strip='<div class="stat-strip">'+
     '<div class="tile l"><span class="tile-emoji" aria-hidden="true">👷‍♂️</span><b>'+money(t.men)+'</b><span class="lbl">Men</span><small>'+inr.format(t.menDays)+' person-days</small></div>'+
     '<div class="tile l"><span class="tile-emoji" aria-hidden="true">👷‍♀️</span><b>'+money(t.women)+'</b><span class="lbl">Women</span><small>'+inr.format(t.womenDays)+' person-days</small></div>'+
+    '<div class="tile t"><span class="tile-emoji" aria-hidden="true">🍛</span><b>'+money(t.extra)+'</b><span class="lbl">Food and others</span><small>Meals, tea, travel</small></div>'+
     '<div class="tile t"><span class="tile-emoji" aria-hidden="true">🗓️</span><b>'+money(week)+'</b><span class="lbl">This week</span><small>Monday to Sunday</small></div>'+
-    '<div class="tile m"><span class="tile-emoji" aria-hidden="true">⏳</span><b>'+money(due)+'</b><span class="lbl">Labour due</span><small>Not yet paid</small></div></div>';
+    '<div class="tile m"><span class="tile-emoji" aria-hidden="true">⏳</span><b>'+money(due)+'</b><span class="lbl">Labour balance due</span><small>Not yet paid</small></div></div>';
   return '<div class="page-head"><div><h2>👷 Labour payments</h2><p class="muted">'+state.labour.length+(state.labour.length===1?' payment, ':' payments, ')+money(t.lab)+' in total</p></div>'+(admin?'<button class="btn primary" data-act="add-labour">+ Add payment</button>':'')+'</div>'+
     strip+
     '<div class="toolbar"><input id="lQ" class="search" type="search" placeholder="Search work, contractor or role" aria-label="Search labour payments" value="'+esc(ui.lq)+'"></div>'+
     '<div class="chips" aria-label="Filter by payment type">'+chipRow([['all','All'],['daily','📅 Daily'],['weekly','🗓️ Weekly'],['once','🤝 One-time']],ui.lpay,'lpay')+'</div>'+
-    '<div class="chips" aria-label="Filter by payment status">'+chipRow([['all','Any status'],['paid','✅ Paid'],['due','⏳ Due']],ui.lstatus,'lstatus')+'</div>'+
+    '<div class="chips" aria-label="Filter by payment status">'+chipRow([['all','Any status'],['paid','✅ Paid'],['partial','🟡 Partial'],['due','⏳ Not paid']],ui.lstatus,'lstatus')+'</div>'+
     '<div class="cards list-gap" id="labList">'+labListHTML()+'</div>';
 }
 
@@ -914,7 +981,63 @@ var toastT;
 function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2200)}
 var opts=function(list,cur,fn){return list.map(function(x){var v=fn(x);return '<option value="'+esc(v[0])+'"'+(v[0]===cur?' selected':'')+'>'+esc(v[1])+'</option>'}).join('')};
 var numIn=function(attrs,val,ph){return '<input type="number" inputmode="decimal" min="0" step="any" '+attrs+' value="'+esc(nv(val))+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>'};
-var statusSeg=function(cur){return '<div class="seg" role="group" aria-label="Payment status"><button type="button" data-act="set-status" data-v="paid" aria-pressed="'+(cur!=='due')+'">✅ Paid</button><button type="button" data-act="set-status" data-v="due" aria-pressed="'+(cur==='due')+'">⏳ Due</button></div>'};
+function payBlockHTML(){
+  return '<fieldset class="block"><legend>💰 Payment</legend><div class="paytypes" id="payModes" role="group" aria-label="Payment status"></div>'+
+    '<div class="form-grid" data-partial><label class="fld"><span>Amount paid so far (₹)</span>'+numIn('data-k="paid"',draft.paid)+'</label></div><p class="balline" id="balLine"></p></fieldset>';
+}
+function renderPayModes(){
+  var h=$('#payModes');if(!h||!draft)return;
+  h.innerHTML=PAYMODES.map(function(m){
+    return '<button type="button" class="paytype" data-act="set-paymode" data-v="'+m[0]+'" aria-pressed="'+(draft.payMode===m[0])+'"><span class="pe" aria-hidden="true">'+m[1]+'</span><b>'+m[2]+'</b><small>'+m[3]+'</small></button>';
+  }).join('');
+}
+function refreshPay(){
+  if(!draft||!sheet||!$('#balLine'))return;
+  var tot=recTotal(sheet.type,draft),m=draft.payMode,p=m==='full'?tot:m==='none'?0:Math.min(num(draft.paid),tot);
+  $$('[data-partial]').forEach(function(e){e.hidden=m!=='partial'});
+  $('#balLine').innerHTML=m==='full'?'Fully paid, no balance left.':'Paid <b>'+money(p)+'</b>, balance due <b>'+money(Math.max(0,tot-p))+'</b>';
+}
+function initPay(kind){
+  var tot=recTotal(kind,draft),st=payState(paidOf(draft,tot),tot);
+  draft.payMode=st==='paid'?'full':st==='partial'?'partial':'none';
+  draft.paid=st==='partial'?paidOf(draft,tot):'';
+}
+function resolvePaid(d,total){
+  if(d.payMode==='full')return Math.round(total*100)/100;
+  if(d.payMode==='none')return 0;
+  var p=num(d.paid);
+  if(!(p>0)){formErr('Enter the amount paid so far, or choose Not paid.');return null}
+  if(p>=total-0.004){formErr('A partial payment must be less than the total. Choose Paid in full instead.');return null}
+  return Math.round(p*100)/100;
+}
+/* update an existing entry's payment from its card */
+function openPaySheet(kind,id){
+  if(!isAdmin())return;
+  var item=(kind==='bill'?state.bills:state.labour).filter(function(x){return x.id===id})[0];if(!item)return;
+  var tot=recTotal(kind,item),p=paidOf(item,tot);
+  var name=kind==='bill'?(item.supplier||'Material bill'):(item.area||item.contractor||'Labour payment');
+  sheet={type:'pay',kind:kind,id:id,total:tot};
+  openSheet('Update payment','<p class="muted" style="margin-bottom:.7rem">'+esc(name)+', '+esc(fmtDate(item.date))+'</p><div class="r-total" style="padding-top:0"><span>Total</span><span>'+money(tot)+'</span></div><label class="fld"><span>Amount paid so far (₹)</span>'+numIn('id="payIn" data-first',p>0?p:'')+'</label><p class="balline" id="payBal" style="margin-top:.6rem"></p>',
+    '<div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn soft" data-act="pay-full">Paid in full</button><button class="btn primary" data-act="pay-save">Save</button></div>',true);
+  updatePayBal();
+}
+function updatePayBal(){
+  var e=$('#payBal');if(!e||!sheet||sheet.type!=='pay')return;
+  var p=Math.min(num(($('#payIn')||{}).value),sheet.total);
+  e.innerHTML='Balance due <b>'+money(Math.max(0,sheet.total-p))+'</b>';
+}
+function applyPay(amount){
+  var s2=sheet,item=(s2.kind==='bill'?state.bills:state.labour).filter(function(x){return x.id===s2.id})[0];if(!item)return;
+  item.paid=Math.round(Math.min(Math.max(amount,0),s2.total)*100)/100;
+  item.status=payState(item.paid,s2.total);
+  persist();closeSheet();render();
+  toast(item.status==='paid'?'Marked as paid in full':item.status==='partial'?'Partial payment saved':'Marked as not paid');
+}
+function savePay(){
+  var p=num(($('#payIn')||{}).value);
+  if(p>sheet.total+0.004)return formErr('The amount paid can’t be more than the total of '+money(sheet.total)+'.');
+  applyPay(p);
+}
 
 /* material bill form */
 function newItem(){return {id:uid(),cat:lastCat,name:'',qty:'',unit:'nos',rate:''}}
@@ -924,6 +1047,7 @@ function openBillSheet(id){
   draft=ex?clone(ex):{id:uid(),date:today(),supplier:'',billNo:'',items:[newItem()],vehicle:'auto',transport:'',loading:'',status:'paid',note:'',created:Date.now()};
   if(!draft.items.length)draft.items.push(newItem());
   sheet={type:'bill',isNew:!ex};
+  initPay('bill');
   var sup={};state.bills.forEach(function(b){if(b.supplier)sup[b.supplier]=1});
   var body='<div class="form-grid">'+
     '<label class="fld"><span>Bill date</span><input type="date" data-k="date" value="'+esc(draft.date)+'"></label>'+
@@ -935,11 +1059,11 @@ function openBillSheet(id){
     '<label class="fld"><span>Vehicle</span><select data-k="vehicle">'+opts(VEHICLES,draft.vehicle,function(v){return [v.id,v.emoji+' '+v.label]})+'</select></label>'+
     '<label class="fld"><span>Transport charge (₹)</span>'+numIn('data-k="transport"',draft.transport,'Auto or tempo fare')+'</label>'+
     '<label class="fld"><span>Loading and unloading (₹)</span>'+numIn('data-k="loading"',draft.loading,'Hamali')+'</label></div></fieldset>'+
-    '<div class="form-grid"><div class="fld"><span>Payment status</span><div id="statusHost">'+statusSeg(draft.status)+'</div></div>'+
-    '<label class="fld"><span>Note</span><textarea data-k="note" placeholder="Optional, for example who received the load">'+esc(draft.note)+'</textarea></label></div>';
+    payBlockHTML()+
+    '<div class="form-grid"><label class="fld"><span>Note</span><textarea data-k="note" placeholder="Optional, for example who received the load">'+esc(draft.note)+'</textarea></label></div>';
   var foot='<div class="foot-total" id="footTotal"></div><div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="save-bill">Save bill</button></div>';
   openSheet(sheet.isNew?'Add material bill':'Edit material bill',body,foot);
-  renderBillRows();
+  renderBillRows();renderPayModes();refreshPay();
 }
 function billRowHTML(it,i,many){
   var c=catOf(it.cat);
@@ -962,6 +1086,7 @@ function updateBillTotals(){
   var f=$('#footTotal');if(!f)return;
   var i=draft.items.reduce(function(s,x){return s+itemAmt(x)},0),t=num(draft.transport)+num(draft.loading);
   f.innerHTML='<span>Items '+money(i)+'</span><span>Transport and loading '+money(t)+'</span><strong>Bill total '+money(i+t)+'</strong>';
+  refreshPay();
 }
 function saveBill(){
   if(!isAdmin())return;
@@ -970,9 +1095,11 @@ function saveBill(){
   var items=d.items.filter(function(i){return (i.name||'').trim()||num(i.qty)||num(i.rate)});
   if(!items.length)return formErr('Add at least one item with a quantity and rate.');
   for(var k=0;k<items.length;k++){if(!(num(items[k].qty)>0&&num(items[k].rate)>0))return formErr('Item '+(k+1)+' needs a quantity and a rate above zero.')}
+  var tot0=items.reduce(function(s,i){return s+num(i.qty)*num(i.rate)},0)+num(d.transport)+num(d.loading);
+  var paid=resolvePaid(d,tot0);if(paid===null)return;
   var bill={id:d.id,date:d.date,supplier:(d.supplier||'').trim(),billNo:(d.billNo||'').trim(),
     items:items.map(function(i){return {id:i.id||uid(),cat:i.cat,name:(i.name||'').trim(),qty:num(i.qty),unit:i.unit,rate:num(i.rate)}}),
-    vehicle:d.vehicle,transport:num(d.transport),loading:num(d.loading),status:d.status==='due'?'due':'paid',note:(d.note||'').trim(),created:d.created||Date.now()};
+    vehicle:d.vehicle,transport:num(d.transport),loading:num(d.loading),paid:paid,status:payState(paid,tot0),note:(d.note||'').trim(),created:d.created||Date.now()};
   var idx=state.bills.findIndex(function(b){return b.id===bill.id});
   if(idx>=0)state.bills[idx]=bill;else state.bills.push(bill);
   lastCat=items[items.length-1].cat;
@@ -995,8 +1122,10 @@ function openLabourSheet(id){
   var ws=weekStart(new Date());
   draft=ex?clone(ex):{id:uid(),date:today(),payType:'daily',from:isoD(ws),to:isoD(addDays(ws,5)),area:'',contractor:'',lines:[newLine('men')],status:'paid',note:'',created:Date.now()};
   if(!draft.lines.length)draft.lines.push(newLine('men'));
+  if(!draft.extras)draft.extras=[];
   if(!draft.from){draft.from=isoD(ws);draft.to=isoD(addDays(ws,5))}
   sheet={type:'labour',isNew:!ex};
+  initPay('labour');
   var areas={};AREAS.forEach(function(a){areas[a]=1});state.labour.forEach(function(e){if(e.area)areas[e.area]=1});
   var body='<div class="paytypes" id="payHost" role="group" aria-label="Payment type"></div>'+
     '<div class="form-grid">'+
@@ -1007,11 +1136,12 @@ function openLabourSheet(id){
     '<label class="fld" data-once><span>Contractor or gang name</span><input type="text" data-k="contractor" placeholder="e.g. Basavaraj gang" value="'+esc(draft.contractor)+'"></label></div>'+
     '<datalist id="dlArea">'+Object.keys(areas).map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>'+
     '<fieldset class="block"><legend>👷 Crew</legend><div id="crewRows"></div><div class="add-row"><button type="button" class="btn soft" data-act="add-crew" data-g="men">👷‍♂️ Add men</button><button type="button" class="btn soft" data-act="add-crew" data-g="women">👷‍♀️ Add women</button></div></fieldset>'+
-    '<div class="form-grid"><div class="fld"><span>Payment status</span><div id="statusHost">'+statusSeg(draft.status)+'</div></div>'+
-    '<label class="fld"><span>Note</span><textarea data-k="note" placeholder="Optional">'+esc(draft.note)+'</textarea></label></div>';
+    '<fieldset class="block auto"><legend>🍛 Food and other costs</legend><div id="extraRows"></div><div class="add-row"><button type="button" class="btn soft" data-act="add-extra" data-t="food">🍛 Add food</button><button type="button" class="btn soft" data-act="add-extra" data-t="tea">☕ Add tea and snacks</button><button type="button" class="btn soft" data-act="add-extra" data-t="other">➕ Add other cost</button></div></fieldset>'+
+    payBlockHTML()+
+    '<div class="form-grid"><label class="fld"><span>Note</span><textarea data-k="note" placeholder="Optional">'+esc(draft.note)+'</textarea></label></div>';
   var foot='<div class="foot-total" id="footTotal"></div><div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="save-labour">Save payment</button></div>';
   openSheet(sheet.isNew?'Add labour payment':'Edit labour payment',body,foot);
-  applyPayType();
+  applyPayType();renderPayModes();refreshPay();
 }
 function applyPayType(){
   var host=$('#payHost');if(!host)return;
@@ -1021,6 +1151,20 @@ function applyPayType(){
   $$('[data-week]').forEach(function(e){e.hidden=draft.payType!=='weekly'});
   $$('[data-once]').forEach(function(e){e.hidden=draft.payType!=='once'});
   renderCrewRows();
+  renderExtraRows();
+}
+function extraRowHTML(x,i){
+  return '<div class="row extra-row" data-i="'+i+'">'+
+    '<label class="cell c-et"><span>Type</span><select data-e="type">'+opts(EXTRAS,extOf(x.type).id,function(t){return [t.id,t.emoji+' '+t.label]})+'</select></label>'+
+    '<label class="cell c-ed"><span>Details</span><input type="text" data-e="desc" autocomplete="off" value="'+esc(x.desc)+'" placeholder="e.g. Lunch for 8 workers"></label>'+
+    '<label class="cell c-ea"><span>Amount (₹)</span>'+numIn('data-e="amount"',x.amount)+'</label>'+
+    '<button type="button" class="icon-btn c-x" data-act="del-extra" data-i="'+i+'" aria-label="Remove cost '+(i+1)+'">✕</button></div>';
+}
+function renderExtraRows(focusLast){
+  var host=$('#extraRows');if(!host||!draft)return;
+  host.innerHTML=draft.extras.length?draft.extras.map(function(x,i){return extraRowHTML(x,i)}).join(''):'<p class="muted" style="margin:0 0 .6rem">Meals, tea, water or travel paid for the crew.</p>';
+  updateLabourTotals();
+  if(focusLast){var r=$$('.extra-row',host),l=r[r.length-1];if(l){var c=l.querySelector('[data-e="amount"]');if(c)c.focus()}}
 }
 function crewRowHTML(l,i,many){
   var m=draft.payType,g=genOf(l.gender);
@@ -1044,7 +1188,8 @@ function renderCrewRows(focusLast){
 function updateLabourTotals(){
   var f=$('#footTotal');if(!f)return;
   var total=labourTotal(draft),h=heads(draft),pd=draft.lines.reduce(function(s,l){return s+personDays(draft,l)},0);
-  f.innerHTML='<span>'+h+' workers</span>'+(draft.payType==='once'?'':'<span>'+inr.format(pd)+' person-days</span>')+'<strong>Total '+money(total)+'</strong>';
+  f.innerHTML='<span>'+h+' workers</span>'+(draft.payType==='once'?'':'<span>'+inr.format(pd)+' person-days</span>')+(extrasTotal(draft)>0?'<span>Food and others '+money(extrasTotal(draft))+'</span>':'')+'<strong>Total '+money(total)+'</strong>';
+  refreshPay();
 }
 function saveLabour(){
   if(!isAdmin())return;
@@ -1055,7 +1200,8 @@ function saveLabour(){
     if(d.from>d.to)return formErr('The week can’t end before it starts.');
   }
   var lines=d.lines.filter(function(l){return num(l.count)||num(l.rate)||num(l.amount)});
-  if(!lines.length)return formErr('Add at least one crew row with a head count.');
+  var extras=(d.extras||[]).filter(function(x){return num(x.amount)>0});
+  if(!lines.length&&!extras.length)return formErr('Add at least one crew row with a head count, or a food or other cost.');
   for(var k=0;k<lines.length;k++){
     var l=lines[k];
     if(!(num(l.count)>0))return formErr('Crew row '+(k+1)+' needs a head count above zero.');
@@ -1065,9 +1211,12 @@ function saveLabour(){
       if(d.payType==='weekly'&&!(num(l.days)>0))return formErr('Crew row '+(k+1)+' needs the days worked.');
     }
   }
+  var tot0=labourTotal({payType:d.payType,lines:lines,extras:extras});
+  var paid=resolvePaid(d,tot0);if(paid===null)return;
   var e={id:d.id,date:d.date,payType:d.payType,from:d.payType==='weekly'?d.from:'',to:d.payType==='weekly'?d.to:'',area:(d.area||'').trim(),contractor:d.payType==='once'?(d.contractor||'').trim():'',
     lines:lines.map(function(l){return {id:l.id||uid(),gender:l.gender==='women'?'women':'men',role:l.role,count:num(l.count),rate:d.payType==='once'?0:num(l.rate),days:d.payType==='weekly'?num(l.days):1,amount:d.payType==='once'?num(l.amount):0}}),
-    status:d.status==='due'?'due':'paid',note:(d.note||'').trim(),created:d.created||Date.now()};
+    extras:extras.map(function(x){return {id:x.id||uid(),type:x.type,desc:(x.desc||'').trim(),amount:num(x.amount)}}),
+    paid:paid,status:payState(paid,tot0),note:(d.note||'').trim(),created:d.created||Date.now()};
   var idx=state.labour.findIndex(function(x){return x.id===e.id});
   if(idx>=0)state.labour[idx]=e;else state.labour.push(e);
   persist();closeSheet();render();toast('Payment saved');
@@ -1105,7 +1254,7 @@ function saveFile(name,text,mime){
 function openSettings(){
   var admin=isAdmin(),hasPin=!!state.settings.pin;
   sheet={type:'settings'};
-  var body='<div class="settings-sec"><h4>☁️ Database</h4><p class="muted" id="dbStatus">'+esc($('#syncChip').textContent)+'. Everything you enter is saved to your Turso database as JSON records and reloaded from there on every device.</p><button class="btn soft" data-act="sync-now">Sync now</button></div>';
+  var body='<div class="settings-sec"><h4>☁️ Database</h4><p class="muted" id="dbStatus">'+esc($('#syncChip').textContent)+'. Everything you enter is saved to your Turso database as JSON records and reloaded from there on every device. Payment details (date, party, total, paid, balance, status and food and other costs) are also kept as their own table columns, added automatically to an older database.</p><button class="btn soft" data-act="sync-now">Sync now</button></div>';
   if(admin){
     body+='<div class="settings-sec"><h4>🏠 Project</h4><div class="form-grid"><label class="fld"><span>Project name</span><input type="text" id="setName" value="'+esc(state.settings.name)+'" data-first></label>'+
       '<label class="fld"><span>Total budget (₹)</span>'+numIn('id="setBudget"',state.settings.budget,'e.g. 2500000')+'</label></div></div>'+
@@ -1118,7 +1267,7 @@ function openSettings(){
     body+='<div class="settings-sec"><h4>🗂️ Backup and restore</h4><p class="muted">Download a backup any time. To move data in, for example from the earlier version of this tracker, paste its backup text below and choose Import. Importing only adds or refreshes records by their id, so nothing already in the database is removed and importing twice never creates duplicates.</p>'+
       '<textarea id="backupTxt" style="min-height:110px;font-size:.8rem" aria-label="Backup data">'+esc(JSON.stringify(state))+'</textarea>'+
       '<div class="add-row" style="margin-top:.5rem"><button class="btn soft" data-act="download-backup">Download backup</button><button class="btn soft" data-act="copy-backup">Copy backup</button><button class="btn primary" data-act="restore">Import into database</button></div><div id="backupMsg"></div></div>'+
-      snapshotSecHTML()+'<div class="settings-sec"><h4>🧪 Sample data and reset</h4><p class="muted">Sample data fills the tracker with example bills and wages so you can see how it works. Erasing downloads a backup first.</p><div class="add-row"><button class="btn soft" data-act="sample">Add sample data</button><button class="btn danger" data-act="reset-ask">Erase everything</button></div></div>';
+      '<div class="settings-sec"><h4>🧪 Sample data and reset</h4><p class="muted">Sample data fills the tracker with example bills and wages so you can see how it works. Erasing downloads a backup first.</p><div class="add-row"><button class="btn soft" data-act="sample">Add sample data</button><button class="btn danger" data-act="reset-ask">Erase everything</button></div></div>';
   }
   openSheet('Settings',body,admin?'<div class="foot-btns"><button class="btn ghost" data-act="close">Cancel</button><button class="btn primary" data-act="save-settings">Save settings</button></div>':'<div class="foot-btns"><button class="btn ghost" data-act="close">Close</button></div>');
 }
@@ -1179,21 +1328,23 @@ function loadSample(){
   var d=function(n){return isoD(addDays(new Date(),-n))};
   var it=function(cat,name,qty,unit,rate){return {id:uid(),cat:cat,name:name,qty:qty,unit:unit,rate:rate}};
   var ln=function(g,role,count,rate,days,amount){return {id:uid(),gender:g,role:role,count:count,rate:rate||0,days:days||1,amount:amount||0}};
+  var ex=function(type,desc,amount){return {id:uid(),type:type,desc:desc,amount:amount}};
   var n=Date.now();
   state.bills=state.bills.concat([
     {id:uid(),date:d(24),supplier:'Sri Lakshmi Traders',billNo:'1184',items:[it('cement','OPC 53 grade cement',60,'bag',415),it('steel','12 mm TMT bars',800,'kg',68)],vehicle:'tempo',transport:1200,loading:400,status:'paid',note:'',created:n-1},
     {id:uid(),date:d(17),supplier:'Manjunath Sand Suppliers',billNo:'',items:[it('sand','M-sand load',3,'load',6500),it('aggregate','20 mm jelly',2,'load',7200)],vehicle:'tractor',transport:1500,loading:0,status:'paid',note:'Unloaded near the east gate',created:n-2},
     {id:uid(),date:d(11),supplier:'Basava Bricks',billNo:'56',items:[it('brick','Red bricks',3000,'nos',9),it('brick','Solid blocks, 6 inch',200,'nos',48)],vehicle:'tempo',transport:1800,loading:600,status:'paid',note:'',created:n-3},
     {id:uid(),date:d(6),supplier:'Shree Hardware and Electricals',billNo:'2209',items:[it('hardware','Binding wire',25,'kg',92),it('electrical','2.5 sq mm wire, 90 m coil',2,'nos',2450)],vehicle:'auto',transport:250,loading:0,status:'paid',note:'',created:n-4},
-    {id:uid(),date:d(2),supplier:'Sri Lakshmi Traders',billNo:'1201',items:[it('cement','OPC 53 grade cement',40,'bag',418)],vehicle:'auto',transport:350,loading:150,status:'due',note:'Pay on Saturday',created:n-5}
+    {id:uid(),date:d(2),supplier:'Sri Lakshmi Traders',billNo:'1201',items:[it('cement','OPC 53 grade cement',40,'bag',418)],vehicle:'auto',transport:350,loading:150,paid:10000,status:'partial',note:'Pay on Saturday',created:n-5}
   ]);
   var ws=weekStart(new Date()),prev=addDays(ws,-7);
   state.labour=state.labour.concat([
-    {id:uid(),date:d(22),payType:'daily',from:'',to:'',area:'Foundation',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000),ln('men','Helper (Kooli)',3,700),ln('women','Helper (Kooli)',3,600)],status:'paid',note:'',created:n-6},
+    {id:uid(),date:d(22),payType:'daily',from:'',to:'',area:'Foundation',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000),ln('men','Helper (Kooli)',3,700),ln('women','Helper (Kooli)',3,600)],extras:[ex('food','Lunch for 8 workers',900),ex('tea','Tea and snacks',250)],status:'paid',note:'',created:n-6},
     {id:uid(),date:d(15),payType:'once',from:'',to:'',area:'Bar bending',contractor:'Basavaraj gang',lines:[ln('men','Bar bender',3,0,1,18000)],status:'paid',note:'Lump sum for the footing steel',created:n-7},
     {id:uid(),date:isoD(addDays(prev,5)),payType:'weekly',from:isoD(prev),to:isoD(addDays(prev,5)),area:'Brick work',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000,6),ln('men','Helper (Kooli)',2,700,6),ln('women','Helper (Kooli)',4,600,6)],status:'paid',note:'',created:n-8},
-    {id:uid(),date:d(3),payType:'daily',from:'',to:'',area:'Plastering',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000),ln('women','Helper (Kooli)',2,600)],status:'due',note:'',created:n-9}
+    {id:uid(),date:d(3),payType:'daily',from:'',to:'',area:'Plastering',contractor:'',lines:[ln('men','Mason (Mestri)',2,1000),ln('women','Helper (Kooli)',2,600)],extras:[ex('food','Lunch for 4 workers',480)],paid:1500,status:'partial',note:'',created:n-9}
   ]);
+  state.bills.forEach(stampBill);state.labour.forEach(stampLabour);
   if(!num(state.settings.budget))state.settings.budget=1000000;
   persist();closeSheet();render();toast('Sample data added');
 }
@@ -1206,14 +1357,18 @@ function csvCell(v){
   return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
 }
 function buildCSV(){
-  var rows=[['Section','Date','Supplier or work','Description','Group','Quantity','Unit or days','Rate','Amount','Status','Note']];
+  var rows=[['Section','Date','Supplier or work','Description','Group','Quantity','Unit or days','Rate','Amount','Status','Note','Record total','Paid','Balance due']];
+  var pay=function(kind,x){var t=recTotal(kind,x);return [t,paidOf(x,t),balOf(x,t)]};
   state.bills.forEach(function(b){
-    b.items.forEach(function(i){rows.push(['Material',b.date,b.supplier,i.name||catOf(i.cat).label,catOf(i.cat).label,num(i.qty),i.unit,num(i.rate),itemAmt(i),b.status,b.note])});
-    if(num(b.transport)>0)rows.push(['Transport',b.date,b.supplier,vehOf(b.vehicle).label+' charge','Transport','','','',num(b.transport),b.status,b.note]);
-    if(num(b.loading)>0)rows.push(['Transport',b.date,b.supplier,'Loading and unloading','Transport','','','',num(b.loading),b.status,b.note]);
+    var first=true,tail=function(){var r=first?pay('bill',b):['','',''];first=false;return r};
+    b.items.forEach(function(i){rows.push(['Material',b.date,b.supplier,i.name||catOf(i.cat).label,catOf(i.cat).label,num(i.qty),i.unit,num(i.rate),itemAmt(i),b.status,b.note].concat(tail()))});
+    if(num(b.transport)>0)rows.push(['Transport',b.date,b.supplier,vehOf(b.vehicle).label+' charge','Transport','','','',num(b.transport),b.status,b.note].concat(tail()));
+    if(num(b.loading)>0)rows.push(['Transport',b.date,b.supplier,'Loading and unloading','Transport','','','',num(b.loading),b.status,b.note].concat(tail()));
   });
   state.labour.forEach(function(e){
-    e.lines.forEach(function(l){rows.push(['Labour ('+payOf(e.payType).label.toLowerCase()+')',e.date,e.area||e.contractor,l.role,genOf(l.gender).label,num(l.count),e.payType==='once'?'':num(l.days)||1,e.payType==='once'?'':num(l.rate),lineAmt(e,l),e.status,e.note])});
+    var first=true,tail=function(){var r=first?pay('labour',e):['','',''];first=false;return r};
+    e.lines.forEach(function(l){rows.push(['Labour ('+payOf(e.payType).label.toLowerCase()+')',e.date,e.area||e.contractor,l.role,genOf(l.gender).label,num(l.count),e.payType==='once'?'':num(l.days)||1,e.payType==='once'?'':num(l.rate),lineAmt(e,l),e.status,e.note].concat(tail()))});
+    (e.extras||[]).forEach(function(x){rows.push(['Labour extra',e.date,e.area||e.contractor,x.desc||extOf(x.type).label,extOf(x.type).label,'','','',num(x.amount),e.status,e.note].concat(tail()))});
   });
   return '\ufeff'+rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n');
 }
@@ -1237,15 +1392,11 @@ document.addEventListener('click',function(ev){
     case 'add-bill':openBillSheet();break;
     case 'edit-bill':openBillSheet(id);break;
     case 'del-bill':confirmDelete('bill',id);break;
-    case 'toggle-bill':
-      if(isAdmin()){var b=state.bills.filter(function(x){return x.id===id})[0];if(b){b.status=b.status==='due'?'paid':'due';persist();render();toast(b.status==='due'?'Marked as due':'Marked as paid')}}
-      break;
+    case 'pay-bill':openPaySheet('bill',id);break;
     case 'add-labour':openLabourSheet();break;
     case 'edit-labour':openLabourSheet(id);break;
     case 'del-labour':confirmDelete('labour',id);break;
-    case 'toggle-labour':
-      if(isAdmin()){var e2=state.labour.filter(function(x){return x.id===id})[0];if(e2){e2.status=e2.status==='due'?'paid':'due';persist();render();toast(e2.status==='due'?'Marked as due':'Marked as paid')}}
-      break;
+    case 'pay-labour':openPaySheet('labour',id);break;
     case 'do-delete':
       if(sheet&&sheet.type==='delete'&&isAdmin()){
         var kind=sheet.kind,did=sheet.id;
@@ -1254,7 +1405,11 @@ document.addEventListener('click',function(ev){
       }
       break;
     case 'close':closeSheet();break;
-    case 'set-status':if(draft){draft.status=v;$('#statusHost').innerHTML=statusSeg(v)}break;
+    case 'set-paymode':if(draft){draft.payMode=v;renderPayModes();refreshPay()}break;
+    case 'add-extra':if(draft){draft.extras.push({id:uid(),type:el.dataset.t,desc:'',amount:''});renderExtraRows(true)}break;
+    case 'del-extra':if(draft){draft.extras.splice(+el.dataset.i,1);renderExtraRows()}break;
+    case 'pay-full':if(sheet&&sheet.type==='pay'&&isAdmin())applyPay(sheet.total);break;
+    case 'pay-save':if(sheet&&sheet.type==='pay'&&isAdmin())savePay();break;
     case 'add-item':if(draft){draft.items.push(newItem());renderBillRows(true)}break;
     case 'del-item':if(draft&&draft.items.length>1){draft.items.splice(+el.dataset.i,1);renderBillRows()}break;
     case 'save-bill':saveBill();break;
@@ -1280,11 +1435,6 @@ document.addEventListener('click',function(ev){
     case 'reset-go':if(isAdmin())doReset();break;
     case 'remove-pin':if(isAdmin())removePin();break;
     case 'download-backup':saveFile('house-build-backup-'+today()+'.json',JSON.stringify(state,null,2),'application/json');toast('Backup downloaded');break;
-    case 'seed-restore':if(isAdmin()){if(sheet&&sheet.type==='snapguard')closeSheet();restoreSeed()}break;
-    case 'seed-dismiss':try{localStorage.setItem(seedDismissKey,seedSig())}catch(e){}updateSeedBar();break;
-    case 'seed-ok':seedResult=null;updateSeedBar();break;
-    case 'snapshot-html':downloadSnapshotHtml(false);break;
-    case 'snapshot-force':closeSheet();downloadSnapshotHtml(true);break;
     case 'sync-now':retryNow();break;
     case 'retry-connect':retryNow();break;
   }
@@ -1294,6 +1444,7 @@ document.addEventListener('input',function(ev){
   var t=ev.target;
   if(t.id==='mQ'){ui.mq=t.value;$('#matList').innerHTML=matListHTML();return}
   if(t.id==='lQ'){ui.lq=t.value;$('#labList').innerHTML=labListHTML();return}
+  if(t.id==='payIn'){updatePayBal();return}
   if(!sheet||!draft||!t.closest('.sheet'))return;
   var r=t.dataset.r,k=t.dataset.k,row=t.closest('[data-i]');
   if(sheet.type==='bill'){
@@ -1303,8 +1454,9 @@ document.addEventListener('input',function(ev){
       if(r==='cat'){var ph=row.querySelector('[data-r="name"]');if(ph)ph.placeholder=catOf(t.value).ph}
       row.querySelector('output').textContent=money(itemAmt(it));
       updateBillTotals();
-    }else if(k){draft[k]=t.value;if(k==='transport'||k==='loading')updateBillTotals()}
+    }else if(k){draft[k]=t.value;if(k==='transport'||k==='loading')updateBillTotals();if(k==='paid')refreshPay()}
   }else if(sheet.type==='labour'){
+    if(t.dataset.e&&row){var xr=draft.extras[+row.dataset.i];if(xr){xr[t.dataset.e]=t.value;updateLabourTotals()}return}
     if(r&&row){
       var l=draft.lines[+row.dataset.i];if(!l)return;
       l[r]=t.value;
@@ -1314,150 +1466,13 @@ document.addEventListener('input',function(ev){
       }
       var out=row.querySelector('output');if(out)out.textContent=money(lineAmt(draft,l));
       updateLabourTotals();
-    }else if(k)draft[k]=t.value;
+    }else if(k){draft[k]=t.value;if(k==='paid')refreshPay()}
   }
 });
 document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'&&$('#backdrop'))closeSheet();
   if(ev.key==='Enter'&&ev.target.id==='pinIn'){ev.preventDefault();doUnlock()}
 });
-
-/* ---------- snapshot inside this file: restore Turso from JSON, and write a new single-file copy ---------- */
-/* The block <script id="hbt-seed"> holds a JSON copy of the database. Restoring only ever ADDS records that
-   the database is missing (matched by id). It never deletes, and never overwrites a record that exists. */
-var seedDismissKey='hbt-seed-dismissed',seedBusy=false,seedResult=null;
-function readSeed(){
-  try{
-    var el=document.getElementById('hbt-seed');if(!el)return null;
-    var o=JSON.parse(el.textContent||'null');if(!o||typeof o!=='object')return null;
-    var n=normalize(o);
-    if(!n.bills.length&&!n.labour.length)return null;
-    return {data:n,exportedAt:o.exportedAt||null};
-  }catch(e){return null}
-}
-var SEED=readSeed();
-function seedSig(){return SEED?(SEED.exportedAt||'')+'|'+SEED.data.bills.length+'|'+SEED.data.labour.length:''}
-function seedDismissed(){try{return localStorage.getItem(seedDismissKey)===seedSig()}catch(e){return false}}
-function seedDate(){if(!SEED||!SEED.exportedAt)return '';var d=new Date(SEED.exportedAt);return isFinite(d)?fmtDate(isoD(d)):''}
-function seedMissing(){
-  var have={};
-  state.bills.forEach(function(b){have['bill:'+b.id]=1});
-  state.labour.forEach(function(e){have['labour:'+e.id]=1});
-  if(!SEED)return {bills:[],labour:[]};
-  return {
-    bills:SEED.data.bills.filter(function(b){return !have['bill:'+b.id]}),
-    labour:SEED.data.labour.filter(function(e){return !have['labour:'+e.id]})
-  };
-}
-function seedSettingsPatch(){
-  var p={};if(!SEED)return p;
-  var s=SEED.data.settings,c=state.settings;
-  if((!c.name||c.name==='My House Build')&&s.name&&s.name!=='My House Build')p.name=s.name;
-  if(!num(c.budget)&&num(s.budget))p.budget=num(s.budget);
-  if(!c.pin&&s.pin)p.pin=String(s.pin);
-  return p;
-}
-function seedPendingCount(){var m=seedMissing();return m.bills.length+m.labour.length+Object.keys(seedSettingsPatch()).length}
-function updateSeedBar(){
-  var bar=$('#seedBar');if(!bar)return;
-  if(seedResult){
-    bar.hidden=false;
-    bar.innerHTML='<div class="box'+(seedResult.kind?' '+seedResult.kind:'')+'" role="status"><p>'+seedResult.html+'</p>'+(seedBusy?'':'<div class="add-row"><button class="btn soft small" data-act="seed-ok">OK</button></div>')+'</div>';
-    return;
-  }
-  if(!SEED||!booted||!connected||!baseKnown||!isAdmin()||seedDismissed()){bar.hidden=true;bar.innerHTML='';return}
-  var m=seedMissing(),n=m.bills.length+m.labour.length,extra=Object.keys(seedSettingsPatch()).length;
-  if(!n&&!extra){bar.hidden=true;bar.innerHTML='';return}
-  var what=[];
-  if(m.bills.length)what.push(m.bills.length+(m.bills.length===1?' bill':' bills'));
-  if(m.labour.length)what.push(m.labour.length+(m.labour.length===1?' labour payment':' labour payments'));
-  if(extra)what.push('some settings');
-  bar.hidden=false;
-  bar.innerHTML='<div class="box"><p>📦 This file carries a saved copy of your data'+(seedDate()?' from '+esc(seedDate()):'')+'. The database is missing <b>'+esc(what.join(', '))+'</b>. Restoring only adds what is missing; nothing is deleted or overwritten.</p>'+
-    '<div class="add-row"><button class="btn primary small" data-act="seed-restore">Restore to Turso</button><button class="btn ghost small" data-act="seed-dismiss">Not now</button></div></div>';
-}
-function seedNote(html,kind){
-  seedResult={html:html,kind:kind||''};
-  updateSeedBar();
-  var m=$('#seedMsg');
-  if(m)m.innerHTML='<div class="err" role="status" style="margin-top:.6rem;'+(kind==='ok'?'background:var(--ok-soft);color:var(--ok)':'')+'">'+html+'</div>';
-}
-async function restoreSeed(){
-  if(!isAdmin()||!SEED||seedBusy)return;
-  seedBusy=true;
-  try{
-    seedNote('⏳ Checking what the database already has…');
-    await syncFromRemote();
-    if(!connected){seedNote('⚠️ Can’t reach the database, so nothing was changed. Try again when you are online.','bad');return}
-    var m=seedMissing(),sp=seedSettingsPatch(),pinVal=null;
-    if(sp.pin)pinVal=/^(h1:|p:)/.test(sp.pin)?sp.pin:await hashPin(sp.pin);
-    var keys=[];
-    /* everything below is synchronous, so no edit can slip in half way */
-    m=seedMissing();
-    m.bills.forEach(function(b){state.bills.push(clone(b));keys.push('bill:'+b.id)});
-    m.labour.forEach(function(e){state.labour.push(clone(e));keys.push('labour:'+e.id)});
-    var sk=Object.keys(sp);
-    if(sp.name)state.settings.name=sp.name;
-    if(sp.budget)state.settings.budget=sp.budget;
-    if(pinVal){state.settings.pin=pinVal;unlocked=true;try{sessionStorage.setItem('hbt-unlocked','1')}catch(e){}}
-    if(!keys.length&&!sk.length){seedNote('✅ Nothing to restore. Everything in this file is already in the database.','ok');return}
-    persist();
-    seedNote('⏳ Sending '+keys.length+' record'+(keys.length===1?'':'s')+' to Turso…');
-    var ok=await flush();
-    if(!ok){seedNote('⚠️ Restored on this device, but the database did not answer. It will sync by itself once the connection is back, so nothing is lost.','bad');return}
-    /* read it back from Turso and compare, so “saved” means saved */
-    var remote=await fetchRemote(),rm=snapshotMap(remote),cur=snapshotMap(state),bad=0;
-    keys.forEach(function(k){if(rm[k]!==cur[k])bad++});
-    if(bad)seedNote('⚠️ '+bad+' of '+keys.length+' records did not read back from Turso. Nothing was removed; press Restore again.','bad');
-    else seedNote('✅ Restored '+m.bills.length+' bills and '+m.labour.length+' labour payments'+(sk.length?' plus settings':'')+'. Read back from Turso and verified.','ok');
-  }catch(e){
-    seedNote('⚠️ Something went wrong: '+esc(e&&e.message?e.message:'unknown error')+'. Nothing was deleted.','bad');
-  }finally{seedBusy=false;render()}
-}
-function snapshotSecHTML(){
-  var s='<div class="settings-sec"><h4>📦 Single-file snapshot</h4>';
-  if(SEED){
-    var mm=seedMissing(),rec=mm.bills.length+mm.labour.length,ex=Object.keys(seedSettingsPatch()).length,n=rec+ex;
-    var gap=(rec?rec+(rec===1?' record':' records'):'')+(rec&&ex?' and ':'')+(ex?'some settings':'');
-    s+='<p class="muted">The data saved inside this file ('+SEED.data.bills.length+' bills, '+SEED.data.labour.length+' labour payments'+(seedDate()?', taken '+esc(seedDate()):'')+') '+(n?'has <b>'+esc(gap)+'</b> the database doesn’t have yet.':'is already fully in the database.')+' Restoring only adds what is missing. It never deletes or overwrites.</p>'+
-      '<div class="add-row"><button class="btn soft" data-act="seed-restore"'+(n?'':' disabled')+'>Restore missing records to Turso</button></div>';
-  }else s+='<p class="muted">This file has no data saved inside it yet.</p>';
-  s+='<div id="seedMsg"></div><p class="muted" style="margin:.8rem 0 .5rem">Download a copy of this whole portal with the database’s current contents built in as JSON. Keep it as your backup: opening it anywhere reconnects to Turso and offers to restore whatever is missing.</p>'+
-    '<button class="btn primary" data-act="snapshot-html">Download portal + data (.html)</button></div>';
-  return s;
-}
-function buildPortalSource(snap){
-  var root=document.documentElement.cloneNode(true);
-  var q=function(s){return root.querySelector(s)};
-  var bd=q('#backdrop');if(bd)bd.remove();
-  q('#view').innerHTML='';q('#tabs').innerHTML='';
-  var tt=q('#toast');tt.innerHTML='';tt.setAttribute('class','toast');
-  var sb=q('#seedBar');sb.innerHTML='';sb.setAttribute('hidden','');
-  q('#projName').textContent='My House Build';
-  q('#syncChip').textContent='⏳ Connecting…';
-  q('#roleChip').textContent='🛠️ Admin mode';
-  var lb=q('#lockBtn');lb.textContent='';lb.setAttribute('hidden','');lb.setAttribute('data-act','lock');
-  q('body').removeAttribute('class');
-  q('title').textContent='House Build Tracker';
-  q('#hbt-seed').textContent=JSON.stringify(snap).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
-  return '<!DOCTYPE html>\n'+root.outerHTML;
-}
-async function downloadSnapshotHtml(force){
-  if(!isAdmin())return;
-  toast('Reading the database…');
-  await syncFromRemote();
-  if(!force&&SEED){
-    var m=seedMissing(),n=m.bills.length+m.labour.length;
-    if(n){
-      sheet={type:'snapguard'};
-      openSheet('Some saved records aren’t in the database','<p>The snapshot inside this file has <b>'+n+'</b> record'+(n===1?'':'s')+' that the database doesn’t have. A new download reflects the database as it is now, so they would not be in the new file.</p><p class="muted" style="margin-top:.6rem">Restore them first if you want to keep them.</p>','<div class="foot-btns"><button class="btn ghost" data-act="snapshot-force">Download anyway</button><button class="btn primary" data-act="seed-restore" data-first>Restore them first</button></div>',true);
-      return;
-    }
-  }
-  var snap=Object.assign({format:'house-build-tracker-snapshot',version:1,exportedAt:new Date().toISOString(),source:connected?'turso':'device-copy'},clone(state));
-  saveFile('house-build-portal-'+today()+'.html',buildPortalSource(snap),'text/html;charset=utf-8');
-  toast(connected?'Downloaded: '+state.bills.length+' bills, '+state.labour.length+' labour payments':'Offline: the file holds this device’s copy');
-}
 
 /* ---------- start ---------- */
 document.body.classList.add('intro');
